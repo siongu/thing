@@ -1,0 +1,3 @@
+rootProject.name = "ThingApp"
+include ':app'
+include ':libthing'
