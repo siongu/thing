@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.v2x.thing">
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <application>
+        <activity
+            android:name="com.v2x.thing.blescan.view.BluetoothActivity"
+            android:screenOrientation="portrait">
+
+        </activity>
+        <!-- 照片裁剪 -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
+        <!-- MQTT -->
+        <service android:name="org.eclipse.paho.android.service.MqttService" />
+        <service android:name="com.v2x.thing.service.V2XMqttService" />
+    </application>
+
+</manifest>
