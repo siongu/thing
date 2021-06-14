@@ -3,7 +3,9 @@ package com.v2x.thing.blescan.view
 import android.bluetooth.BluetoothGatt
 import android.content.Intent
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
+import android.support.annotation.RequiresApi
 import android.util.Log
 import android.view.View
 import android.widget.AbsListView
@@ -164,6 +166,7 @@ class BluetoothActivity : V2XBaseActivity(), BluetoothView {
                     connectListener?.onStartConnect()
                 }
 
+                @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
                 override fun onConnectFail(
                     bleDevice: BleDevice?,
                     gatt: BluetoothGatt?,
@@ -189,6 +192,7 @@ class BluetoothActivity : V2XBaseActivity(), BluetoothView {
                     )
                 }
 
+                @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
                 override fun onDisConnected(
                     isActiveDisConnected: Boolean,
                     bleDevice: BleDevice,
@@ -208,7 +212,7 @@ class BluetoothActivity : V2XBaseActivity(), BluetoothView {
 
     fun showFailDialog(msg: String) {
         if (sDialog == null) {
-            sDialog = SimpleDialog(context!!).apply {
+            sDialog = SimpleDialog(context).apply {
                 setContentView(R.layout.simple_dialog_layout)
                 findViewById<TextView>(R.id.tv_msg).text = msg
             }

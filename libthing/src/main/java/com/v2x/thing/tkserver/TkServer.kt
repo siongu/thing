@@ -15,17 +15,9 @@ import com.v2x.thing.toast
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
-class TkServer private constructor(private val context: Context) {
+class TkServer private constructor() {
     companion object {
-        @SuppressLint("StaticFieldLeak")
-        private var INSTANCE: TkServer? = null
-        fun singleInstance(context: Context): TkServer {
-            return INSTANCE ?: INSTANCE.let {
-                val tkServer = TkServer(context)
-                INSTANCE = tkServer
-                tkServer
-            }
-        }
+        val INSTANCE by lazy { TkServer() }
     }
 
     init {
@@ -69,7 +61,7 @@ class TkServer private constructor(private val context: Context) {
                         1000 -> {
                             isSuccess = false
                             handleOnUiThread {
-                                onReceiveMessageListener?.onTokenError(
+                                onReceiveMessageListener?.onReceiveError(
                                     State,
                                     "AppKey 或者 AppSecret 无效"
                                 )
@@ -134,7 +126,6 @@ class TkServer private constructor(private val context: Context) {
 
     interface OnReceiveMessageListener {
         fun onReceiveMessage(locationInfo: LocationInfo)
-        fun onReceiveError(errorCode: Int, msg: String)
-        fun onTokenError(errorCode: Int, msg: String)
+        fun onReceiveError(errorCode: Int, msg: String) {}
     }
 }

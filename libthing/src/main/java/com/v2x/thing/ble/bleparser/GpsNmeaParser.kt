@@ -36,7 +36,6 @@ class GpsNmeaParser : Parser {
     private val pipIn = PipedInputStream()
     private val pipOut = PipedOutputStream()
     private val sentenceReader = SentenceReader(pipIn)
-    private val sb = StringBuffer()
 
     init {
         pipIn.connect(pipOut)

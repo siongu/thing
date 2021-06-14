@@ -19,7 +19,7 @@ abstract class BaseMqttService : Service() {
     private val dispatchers: MutableList<Dispatcher> = mutableListOf()
     private var mqttAndroidClient: MqttAndroidClient? = null
     private var mMqttConnectOptions: MqttConnectOptions? = null
-    private lateinit var info: MqBaseInfo
+    private lateinit var info: MqConfig
     protected val tag = this::class.simpleName
     private val lock = Any()
     private val scheduledPool = ScheduledThreadPoolExecutor(1)
@@ -28,7 +28,7 @@ abstract class BaseMqttService : Service() {
         Log.d(tag, "onCreate")
     }
 
-    protected abstract fun getInfo(): MqBaseInfo
+    protected abstract fun getInfo(): MqConfig
 
 
     override fun onBind(intent: Intent): IBinder? {
@@ -51,7 +51,7 @@ abstract class BaseMqttService : Service() {
 
     private fun connectMqtt() {
         doConnect()
-        doConnectAsync()?.run {
+        doConnectAsync().run {
             scheduledPool.execute(this)
         }
     }
@@ -59,7 +59,7 @@ abstract class BaseMqttService : Service() {
     private fun doConnect() {
     }
 
-    private fun doConnectAsync(): Runnable? {
+    private fun doConnectAsync(): Runnable {
         return Runnable {
             synchronized(lock) {
                 try {
@@ -121,7 +121,7 @@ abstract class BaseMqttService : Service() {
      * 判断网络是否连接
      */
     private val isConnectIsNormal: Boolean
-        private get() {
+        get() {
             val connectivityManager =
                 this.applicationContext.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
             val info = connectivityManager.activeNetworkInfo
@@ -134,7 +134,7 @@ abstract class BaseMqttService : Service() {
                 /*
                 *没有可用网络的时候，延迟3秒再尝试重连
                 */
-                doConnectAsync()?.run {
+                doConnectAsync().run {
                     scheduledPool.schedule(this, 3000, TimeUnit.MILLISECONDS)
                 }
                 false
@@ -194,9 +194,7 @@ abstract class BaseMqttService : Service() {
     inner class DispatcherHandlerImpl : Binder(), IDispatcherHandler {
 
         override fun register(dispatcher: Dispatcher) {
-            if (dispatcher != null) {
-                dispatchers.add(dispatcher)
-            }
+            dispatchers.add(dispatcher)
         }
 
         override fun unRegister(dispatcher: Dispatcher) {
@@ -217,7 +215,7 @@ abstract class BaseMqttService : Service() {
     }
 }
 
-data class MqBaseInfo(
+data class MqConfig(
     val serverUri: String,
     val clientId: String,
     val publishTopics: List<String>,

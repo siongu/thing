@@ -34,8 +34,8 @@ open class BaseActivity : AppCompatActivity(), CoroutineScope {
         super.onCreate(savedInstanceState)
         Logger.d("$TAG onCreate")
 //        fitDp()
-//        ImmersionBar.with(this).init()
-        //        fitDp(this);
+        ImmersionBar.with(this).init()
+//        fitDp(this);
         supportFragmentManager.addOnBackStackChangedListener {
             val fragment = currentFragment ?: return@addOnBackStackChangedListener
             val newStackSize = supportFragmentManager.backStackEntryCount
@@ -209,11 +209,9 @@ open class BaseActivity : AppCompatActivity(), CoroutineScope {
         }
         ft.show(f)
         val list = fm.fragments
-        if (list != null) {
-            for (i in list.indices) {
-                if (list[i] != null && list[i] !== f) {
-                    ft.hide(list[i]!!)
-                }
+        for (i in list.indices) {
+            if (list[i] != null && list[i] !== f) {
+                ft.hide(list[i]!!)
             }
         }
         if (addToBackStack && isFirstAdded) {

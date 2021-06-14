@@ -3,6 +3,8 @@ package com.v2x.thing.blescan.adapter
 import android.bluetooth.BluetoothGatt
 import android.content.Context
 import android.graphics.drawable.AnimationDrawable
+import android.os.Build
+import android.support.annotation.RequiresApi
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -131,6 +133,7 @@ class BleDevicesAdapter(
 
                 }
 
+                @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
                 override fun onDisConnected(
                     isActiveDisConnected: Boolean,
                     device: BleDevice?,
@@ -156,6 +159,7 @@ class BleDevicesAdapter(
 //                    tvConnect.isEnabled = false
                 }
 
+                @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
                 override fun onConnectFail(
                     bleDevice: BleDevice?,
                     gatt: BluetoothGatt?,
@@ -195,6 +199,7 @@ class BleDevicesAdapter(
         pb.visibility = View.VISIBLE
     }
 
+    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN)
     private fun stopLoading(pb: ImageView) {
         val animation: AnimationDrawable? = pb.background as AnimationDrawable?
         animation?.stop()

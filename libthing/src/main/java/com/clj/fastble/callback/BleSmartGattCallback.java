@@ -22,9 +22,10 @@ public class BleSmartGattCallback extends BleGattCallback {
     @Override
     @CallSuper
     public void onDisConnected(boolean isActiveDisConnected, BleDevice device, BluetoothGatt gatt, int status) {
-//        if (gatt != null) {
-//            gatt.disconnect();
-//        }
+        if (gatt != null) {
+            gatt.disconnect();
+            gatt.close();
+        }
     }
 
     @Override
