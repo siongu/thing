@@ -65,13 +65,15 @@ class TkServer private constructor(private val context: Context) {
                             val accessToken = AccessToken
                             saveToken(accessToken)
                             println("accessToken update:$accessToken")
-                            if (BuildConfig.DEBUG)
-                                handleOnUiThread { context.toast("Token已更新") }
                         }
                         1000 -> {
                             isSuccess = false
-                            if (BuildConfig.DEBUG)
-                                handleOnUiThread { context.toast("AppKey 或者 AppSecret 无效") }
+                            handleOnUiThread {
+                                onReceiveMessageListener?.onTokenError(
+                                    State,
+                                    "AppKey 或者 AppSecret 无效"
+                                )
+                            }
                         }
                     }
                 }
@@ -99,11 +101,16 @@ class TkServer private constructor(private val context: Context) {
                 info?.apply {
                     when (State) {
                         0 -> onReceiveMessageListener?.onReceiveMessage(this) // 成功
-                        2001 -> handleOnUiThread { context.toast("无数据") }
-                        2002 -> handleOnUiThread { context.toast("参数错误") }
+                        2001 -> handleOnUiThread {
+                            onReceiveMessageListener?.onReceiveError(State, "无数据")
+                        }
+                        2002 -> handleOnUiThread {
+                            onReceiveMessageListener?.onReceiveError(State, "参数错误")
+                        }
                         6000 -> {
-                            if (BuildConfig.DEBUG)
-                                handleOnUiThread { context.toast("Token错误或已过期") }
+                            handleOnUiThread {
+                                onReceiveMessageListener?.onReceiveError(State, "Token错误或已过期")
+                            }
                             getToken(true)
                         }
                     }
@@ -127,5 +134,7 @@ class TkServer private constructor(private val context: Context) {
 
     interface OnReceiveMessageListener {
         fun onReceiveMessage(locationInfo: LocationInfo)
+        fun onReceiveError(errorCode: Int, msg: String)
+        fun onTokenError(errorCode: Int, msg: String)
     }
 }
