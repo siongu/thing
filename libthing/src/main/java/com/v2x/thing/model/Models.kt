@@ -1,5 +1,7 @@
 package com.v2x.thing.model
 
+import java.sql.Timestamp
+
 data class TrackParam(
     var Token: String?,
     var MapType: String = "wgs84",
@@ -37,11 +39,14 @@ data class AuthInfo(
 )
 
 data class GGAInfo(
-    val latitude: Double,
-    val longitude: Double,
-    val altitude: Double,
-    val gpsFixQuality: Int,
-    val satelliteCount: Int,
-    val gpsTimeInMills: Long,
+    var latitude: Double = 0.0,
+    var longitude: Double = 0.0,
+    var altitude: Double = 0.0,
+    var speed: Double = 0.0,
+    var course: Double = 0.0,
+    var gpsFixQuality: Int = -1,
+    var satelliteCount: Int = 0,
+    var gpsTimeInMills: Long = 0,
+    val timestamp: Long = System.currentTimeMillis()
 )
 

@@ -1,17 +1,13 @@
 package com.v2x.thing.tkserver
 
-import android.annotation.SuppressLint
-import android.content.Context
 import com.common.stdlib.network.Domain
 import com.common.stdlib.storage.KV
-import com.v2x.thing.BuildConfig
 import com.v2x.thing.handleOnUiThread
 import com.v2x.thing.model.AuthorizeParam
 import com.v2x.thing.model.LocationInfo
 import com.v2x.thing.model.TrackParam
 import com.v2x.thing.tkserver.api.DataSource
 import com.v2x.thing.toJson
-import com.v2x.thing.toast
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 

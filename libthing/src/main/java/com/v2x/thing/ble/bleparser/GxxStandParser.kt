@@ -8,12 +8,12 @@ import java.util.*
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 
-class GxxStandParser : Parser {
+class GxxStandParser private constructor() : Parser {
     companion object {
-        val INSTANCE = GxxStandParser()
+        fun newInstance(): GxxStandParser {
+            return GxxStandParser()
+        }
     }
-
-    private constructor()
 
     private val TAG = GxxStandParser::class.java.simpleName
     private val byteBlockingQueue: BlockingQueue<ByteArray> = LinkedBlockingQueue()

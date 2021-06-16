@@ -20,14 +20,12 @@ import com.v2x.thing.ble.bleparser.Parser
 import com.v2x.thing.ble.splitWriter.SplitWriter
 import java.util.*
 
-class BleService : IDispatcherHandler {
+class BleService private constructor() : IDispatcherHandler {
     companion object {
         val TAG = BleService::class.java.simpleName
         val INSTANCE = BleService()
         private val WRITER = SplitWriter.INSTANCE
     }
-
-    private constructor()
 
     enum class State(s: Int) {
         CONNECTED(0), DISCONNECTED(-1), NOTIFY_OPEN(1), NOTIFY_STOP(-2)
@@ -40,8 +38,9 @@ class BleService : IDispatcherHandler {
     private val bleParsers = mutableMapOf<String, Parser>()
 
     init {
-        bleParsers[UUID_SERVICE_GXX.toString()] = GxxStandParser.INSTANCE
-        bleParsers[UUID_SERVICE_MENG_XIN.toString()] = GpsNmeaParser.INSTANCE
+        bleParsers[UUID_SERVICE_GXX.toString()] = GxxStandParser.newInstance()
+        bleParsers[UUID_SERVICE_MENG_XIN.toString()] = GpsNmeaParser.newInstance()
+        bleParsers[UUID_SERVICE_MENG_XIN_CP200.toString()] = GpsNmeaParser.newInstance()
         addConnectedDeviceWrapper(
             DeviceWrapper(
                 null,
@@ -56,6 +55,14 @@ class BleService : IDispatcherHandler {
                 bleParsers[UUID_SERVICE_MENG_XIN.toString()],
                 UUID_SERVICE_MENG_XIN.toString(),
                 UUID_NOTIFY_MENG_XIN.toString()
+            )
+        )
+        addConnectedDeviceWrapper(
+            DeviceWrapper(
+                null,
+                bleParsers[UUID_SERVICE_MENG_XIN_CP200.toString()],
+                UUID_SERVICE_MENG_XIN_CP200.toString(),
+                UUID_NOTIFY_MENG_XIN_CP200.toString()
             )
         )
     }

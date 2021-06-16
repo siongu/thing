@@ -7,30 +7,25 @@ import net.sf.marineapi.nmea.event.SentenceListener
 import net.sf.marineapi.nmea.io.SentenceReader
 import net.sf.marineapi.nmea.sentence.GGASentence
 import net.sf.marineapi.nmea.sentence.GLLSentence
+import net.sf.marineapi.nmea.sentence.RMCSentence
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.util.concurrent.Executors
 
 
-class GpsNmeaParser : Parser {
+class GpsNmeaParser private constructor() : Parser {
     companion object {
-        val INSTANCE = GpsNmeaParser()
-        private fun dispatchGGA(gga: GGASentence) {
-            val ggaInfo = GGAInfo(
-                gga.position.latitude,
-                gga.position.longitude,
-                gga.altitude,
-                gga.fixQuality.toInt(),
-                gga.satelliteCount,
-                gga.time.milliseconds
-            )
+        fun newInstance(): GpsNmeaParser {
+            return GpsNmeaParser()
+        }
+
+        private fun dispatchGGA(ggaInfo: GGAInfo) {
+            println("ggaInfo:${ggaInfo}")
             BleService.INSTANCE.getDispatchers().forEach {
                 it.dispatchGGA(ggaInfo)
             }
         }
     }
-
-    private constructor()
 
     private val executors = Executors.newSingleThreadExecutor()
     private val pipIn = PipedInputStream()
@@ -47,15 +42,30 @@ class GpsNmeaParser : Parser {
         override fun readingPaused() {}
         override fun readingStarted() {}
         override fun readingStopped() {}
+        var ggaInfo: GGAInfo? = null
         override fun sentenceRead(event: SentenceEvent) {
             try {
                 val s = event.sentence
-                if ("GLL" == s.sentenceId) {
-                    val gll = s as GLLSentence
-                    println("GLL: $gll")
+                if ("RMC" == s.sentenceId) {
+                    ggaInfo = GGAInfo()
+                    val rmc = s as RMCSentence
+                    println("RMC: $rmc")
+                    ggaInfo?.apply {
+                        speed = rmc.speed
+                        course = rmc.correctedCourse
+                    }
                 } else if ("GGA" == s.sentenceId) {
                     val gga = s as GGASentence
-                    dispatchGGA(gga)
+                    println("GGA: $gga")
+                    ggaInfo?.apply {
+                        latitude = gga.position.latitude
+                        longitude = gga.position.longitude
+                        altitude = gga.altitude
+                        gpsFixQuality = gga.fixQuality.toInt()
+                        satelliteCount = gga.satelliteCount
+                        gpsTimeInMills = gga.time.milliseconds
+                        dispatchGGA(this)
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
