@@ -7,7 +7,13 @@ import android.content.Intent
 import android.os.IBinder
 import androidx.collection.arrayMapOf
 
-class MqttServiceManager(private val context: Context) {
+class MqttServiceManager private constructor(private val context: Context) {
+    companion object {
+        fun getInstance(context: Context): MqttServiceManager {
+            return MqttServiceManager(context)
+        }
+    }
+
     private val conns = arrayMapOf<Any, MutableList<MqttServiceConnection>>()
     private val defaultKey = Any()
 
