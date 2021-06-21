@@ -1,29 +1,23 @@
 package com.v2x.thing.ble.bleparser
 
 import com.v2x.thing.ble.bleservice.BleService
+import com.v2x.thing.ble.bleservice.ServiceType
 import com.v2x.thing.model.GGAInfo
 import net.sf.marineapi.nmea.event.SentenceEvent
 import net.sf.marineapi.nmea.event.SentenceListener
 import net.sf.marineapi.nmea.io.SentenceReader
 import net.sf.marineapi.nmea.sentence.GGASentence
-import net.sf.marineapi.nmea.sentence.GLLSentence
 import net.sf.marineapi.nmea.sentence.RMCSentence
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.util.concurrent.Executors
 
 
-class GpsNmeaParser private constructor() : Parser {
-    companion object {
-        fun newInstance(): GpsNmeaParser {
-            return GpsNmeaParser()
-        }
+class GpsNmeaParser private constructor(private val type: ServiceType) : Parser {
 
-        private fun dispatchGGA(ggaInfo: GGAInfo) {
-            println("ggaInfo:${ggaInfo}")
-            BleService.INSTANCE.getDispatchers().forEach {
-                it.dispatchGGA(ggaInfo)
-            }
+    companion object {
+        fun newInstance(type: ServiceType): GpsNmeaParser {
+            return GpsNmeaParser(type)
         }
     }
 
@@ -38,23 +32,29 @@ class GpsNmeaParser private constructor() : Parser {
         sentenceReader.start()
     }
 
-    class MultiSentenceListener : SentenceListener {
+    inner class MultiSentenceListener : SentenceListener {
         override fun readingPaused() {}
         override fun readingStarted() {}
         override fun readingStopped() {}
         var ggaInfo: GGAInfo? = null
         override fun sentenceRead(event: SentenceEvent) {
+            println("parse for device type \"${type.desc}\"")
             try {
                 val s = event.sentence
                 if ("RMC" == s.sentenceId) {
-                    ggaInfo = GGAInfo()
+                    if (type == ServiceType.TK1306) {
+                        ggaInfo = GGAInfo()
+                    }
                     val rmc = s as RMCSentence
                     println("RMC: $rmc")
                     ggaInfo?.apply {
                         speed = rmc.speed
-                        course = rmc.correctedCourse
+                        course = rmc.course
                     }
                 } else if ("GGA" == s.sentenceId) {
+                    if (type == ServiceType.CP200) {
+                        ggaInfo = GGAInfo()
+                    }
                     val gga = s as GGASentence
                     println("GGA: $gga")
                     ggaInfo?.apply {
@@ -74,6 +74,13 @@ class GpsNmeaParser private constructor() : Parser {
 
     }
 
+    private fun dispatchGGA(ggaInfo: GGAInfo) {
+        println("ggaInfo:${ggaInfo}")
+        BleService.INSTANCE.getDispatchers(type).forEach {
+            it.dispatchGGA(ggaInfo)
+        }
+    }
+
 
     override fun parseData(data: ByteArray) {
         executors.execute {
@@ -81,8 +88,14 @@ class GpsNmeaParser private constructor() : Parser {
         }
     }
 
+    private val sb = StringBuffer()
     private fun task(data: ByteArray) {
         println("raw data:${data.contentToString()}")
+        sb.append(String(data))
+        if (sb.length > 10000) {
+            sb.delete(0, sb.lastIndexOf("$"))
+        }
+        println("nmea:$sb")
         pipOut.write(data)
     }
 }

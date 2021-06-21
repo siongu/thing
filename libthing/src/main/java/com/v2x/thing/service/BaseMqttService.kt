@@ -6,20 +6,16 @@ import android.net.ConnectivityManager
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
-import com.clj.fastble.data.BleDevice
-import com.v2x.thing.ble.OnWriteMessageListener
-import com.v2x.thing.ble.bleservice.Dispatcher
-import com.v2x.thing.ble.bleservice.IDispatcherHandler
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 abstract class BaseMqttService : Service() {
-    private val dispatchers: MutableList<Dispatcher> = mutableListOf()
+    private val dispatchers = mutableSetOf<MqttDispatcher>()
     private var mqttAndroidClient: MqttAndroidClient? = null
     private var mMqttConnectOptions: MqttConnectOptions? = null
-    private lateinit var info: MqConfig
+    private lateinit var info: MqttConfig
     protected val tag = this::class.simpleName
     private val lock = Any()
     private val scheduledPool = ScheduledThreadPoolExecutor(1)
@@ -28,7 +24,7 @@ abstract class BaseMqttService : Service() {
         Log.d(tag, "onCreate")
     }
 
-    protected abstract fun getInfo(): MqConfig
+    protected abstract fun onCreateFactory(): MqttConfigFactory
 
 
     override fun onBind(intent: Intent): IBinder? {
@@ -77,7 +73,8 @@ abstract class BaseMqttService : Service() {
      * 初始化
      */
     private fun init() {
-        info = getInfo()
+        val factory = onCreateFactory()
+        info = factory.create()
         mqttAndroidClient = MqttAndroidClient(this, info.serverUri, info.clientId)
         mqttAndroidClient?.setCallback(mqttCallback) //设置监听订阅消息的回调
         mMqttConnectOptions = MqttConnectOptions().apply {
@@ -167,8 +164,14 @@ abstract class BaseMqttService : Service() {
         override fun messageArrived(topic: String, message: MqttMessage) {
             val msg = String(message.payload)
             Log.i(tag, "收到消息：topic:$topic, msg: $msg")
-            dispatchers.forEach {
-                it.dispatch(msg)
+            dispatchers.forEach { dispatcher ->
+                val filterTopics = dispatcher.filterTopics()
+                if (filterTopics != null) {
+                    if (filterTopics.contains(topic))
+                        dispatcher.dispatchMqttMessage(topic, msg)
+                } else {
+                    dispatcher.dispatchMqttMessage(topic, msg)
+                }
             }
         }
 
@@ -191,31 +194,23 @@ abstract class BaseMqttService : Service() {
         super.onDestroy()
     }
 
-    inner class DispatcherHandlerImpl : Binder(), IDispatcherHandler {
+    inner class DispatcherHandlerImpl : Binder(), IMqttDispatcherHandler {
 
-        override fun register(dispatcher: Dispatcher) {
+        override fun register(dispatcher: MqttDispatcher) {
             dispatchers.add(dispatcher)
         }
 
-        override fun unRegister(dispatcher: Dispatcher) {
+        override fun unRegister(dispatcher: MqttDispatcher) {
             dispatchers.remove(dispatcher)
         }
 
         override fun clean() {
         }
 
-        override fun sendMessage(
-            bleDevice: BleDevice?,
-            msg: String?,
-            callback: OnWriteMessageListener?
-        ) {
-            TODO("Not yet implemented")
-        }
-
     }
 }
 
-data class MqConfig(
+data class MqttConfig(
     val serverUri: String,
     val clientId: String,
     val publishTopics: List<String>,

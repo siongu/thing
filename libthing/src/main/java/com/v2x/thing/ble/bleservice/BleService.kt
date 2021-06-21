@@ -19,6 +19,7 @@ import com.v2x.thing.ble.bleparser.GxxStandParser
 import com.v2x.thing.ble.bleparser.Parser
 import com.v2x.thing.ble.splitWriter.SplitWriter
 import java.util.*
+import kotlin.collections.ArrayList
 
 class BleService private constructor() : IDispatcherHandler {
     companion object {
@@ -31,7 +32,7 @@ class BleService private constructor() : IDispatcherHandler {
         CONNECTED(0), DISCONNECTED(-1), NOTIFY_OPEN(1), NOTIFY_STOP(-2)
     }
 
-    private val dispatchers = mutableSetOf<Dispatcher>()
+    private val dispatchers = mutableMapOf<String, MutableSet<Dispatcher>>()
     private var onConnectListener: BleGattCallback? = null
     private var notifyListener: OnNotifyListener? = null
     private val connectedDevices: MutableList<DeviceWrapper> = mutableListOf()
@@ -39,8 +40,8 @@ class BleService private constructor() : IDispatcherHandler {
 
     init {
         bleParsers[UUID_SERVICE_GXX.toString()] = GxxStandParser.newInstance()
-        bleParsers[UUID_SERVICE_MENG_XIN.toString()] = GpsNmeaParser.newInstance()
-        bleParsers[UUID_SERVICE_MENG_XIN_CP200.toString()] = GpsNmeaParser.newInstance()
+        bleParsers[UUID_SERVICE_MENG_XIN_TK1306.toString()] = GpsNmeaParser.newInstance(ServiceType.TK1306)
+        bleParsers[UUID_SERVICE_MENG_XIN_CP200.toString()] = GpsNmeaParser.newInstance(ServiceType.CP200)
         addConnectedDeviceWrapper(
             DeviceWrapper(
                 null,
@@ -52,9 +53,9 @@ class BleService private constructor() : IDispatcherHandler {
         addConnectedDeviceWrapper(
             DeviceWrapper(
                 null,
-                bleParsers[UUID_SERVICE_MENG_XIN.toString()],
-                UUID_SERVICE_MENG_XIN.toString(),
-                UUID_NOTIFY_MENG_XIN.toString()
+                bleParsers[UUID_SERVICE_MENG_XIN_TK1306.toString()],
+                UUID_SERVICE_MENG_XIN_TK1306.toString(),
+                UUID_NOTIFY_MENG_XIN_TK1306.toString()
             )
         )
         addConnectedDeviceWrapper(
@@ -111,16 +112,23 @@ class BleService private constructor() : IDispatcherHandler {
         return connectedDevices
     }
 
-    fun getDispatchers(): List<Dispatcher> {
-        return ArrayList(dispatchers)
+    fun getDispatchers(type: ServiceType): List<Dispatcher> {
+        return dispatchers[type.uuid].run {
+            if (this == null) ArrayList() else ArrayList(this)
+        }
     }
 
-    override fun register(dispatcher: Dispatcher) {
-        dispatchers.add(dispatcher)
+    override fun register(type: ServiceType, dispatcher: Dispatcher) {
+        var dis = dispatchers[type.uuid]
+        if (dis == null) {
+            dis = mutableSetOf()
+            dispatchers[type.uuid] = dis
+        }
+        dis.add(dispatcher)
     }
 
-    override fun unRegister(dispatcher: Dispatcher) {
-        dispatchers.remove(dispatcher)
+    override fun unRegister(type: ServiceType, dispatcher: Dispatcher) {
+        dispatchers[type.uuid]?.remove(dispatcher)
     }
 
     override fun clean() {

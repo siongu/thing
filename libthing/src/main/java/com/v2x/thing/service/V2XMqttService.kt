@@ -1,32 +1,31 @@
 package com.v2x.thing.service
 
-import java.util.*
+import android.util.Log
 
 /**
  */
 class V2XMqttService : BaseMqttService() {
+    override fun onCreate() {
+        isCreate = true
+        super.onCreate()
+    }
+
     companion object {
-        private var mqConfig: MqConfig? = null
-        fun setConfig(config: MqConfig) {
-            mqConfig = config
+        private var isCreate = false
+        private var mqConfigFactory: MqttConfigFactory = DefaultMqttConfigFactory()
+        fun setMqConfigFactory(factory: MqttConfigFactory) {
+            if (isCreate) {
+                Log.w(
+                    "V2XMqttService",
+                    "setting 'mqConfigFactory' after starting service will not be available. "
+                )
+            } else {
+                mqConfigFactory = factory
+            }
         }
     }
 
-    private val serverUri = "tcp://kmmnn.top:1885" //服务器地址（协议+地址+端口号）
-    override fun getInfo(): MqConfig {
-        return mqConfig ?: kotlin.run {
-            val clientId = UUID.randomUUID().toString()
-            println("clientId:$clientId")
-            MqConfig(
-                serverUri = serverUri,
-                clientId = clientId,
-                publishTopics = arrayListOf(
-//                    "gps-src-data/tk1306",
-                    "gps-src-data/cp200"
-                ),
-                userName = "admin",
-                password = "password"
-            )
-        }
+    override fun onCreateFactory(): MqttConfigFactory {
+        return mqConfigFactory
     }
 }

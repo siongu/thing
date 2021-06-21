@@ -10,9 +10,11 @@ import android.util.Log
 import android.view.View
 import android.widget.AbsListView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import com.clj.fastble.BleManager
 import com.clj.fastble.callback.BleGattCallback
+import com.clj.fastble.callback.BleMtuChangedCallback
 import com.clj.fastble.callback.BleScanCallback
 import com.clj.fastble.callback.BleSmartGattCallback
 import com.clj.fastble.data.BleDevice
@@ -29,6 +31,8 @@ import com.v2x.thing.blescan.adapter.BleDevicesAdapter
 import com.v2x.thing.databinding.ActivityBluetoothBinding
 import com.v2x.thing.handleOnUiThreadDelay
 import com.v2x.thing.removeCallbacksAndMessages
+import com.v2x.thing.service.MqttDispatcher
+import com.v2x.thing.service.MqttServiceManager
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 
@@ -184,7 +188,32 @@ class BluetoothActivity : V2XBaseActivity(), BluetoothView {
                     status: Int
                 ) {
                     connectListener?.onConnectSuccess(bleDevice, gatt, status)
-                    // open notify
+                    val sdkInt = Build.VERSION.SDK_INT
+                    println("sdkInt------------>$sdkInt")
+                    if (sdkInt >= Build.VERSION_CODES.LOLLIPOP) {
+                        //设置最大发包、收包的长度为512个字节
+                        BleManager.getInstance().setMtu(bleDevice, 512, object :
+                            BleMtuChangedCallback() {
+                            override fun onSetMTUFailure(exception: BleException?) {
+                                println("set mtu fail,ble最大传输长度:20")
+                                // open notify
+                                openNotify(bleDevice, onNotifyListener)
+                            }
+
+                            override fun onMtuChanged(mtu: Int) {
+                                println("set mtu success,ble最大传输长度:$mtu")
+                                // open notify
+                                openNotify(bleDevice, onNotifyListener)
+                            }
+                        })
+                    } else {
+                        println("ble最大传输长度:20")
+                        // open notify
+                        openNotify(bleDevice, onNotifyListener)
+                    }
+                }
+
+                private fun openNotify(bleDevice: BleDevice, onNotifyListener: OnNotifyListener?) {
                     handleOnUiThreadDelay(
                         {
                             BleService.INSTANCE.openAvailableNotify(bleDevice, onNotifyListener)

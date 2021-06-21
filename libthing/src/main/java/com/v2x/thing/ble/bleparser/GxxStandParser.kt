@@ -2,6 +2,7 @@ package com.v2x.thing.ble.bleparser
 
 import android.util.Log
 import com.v2x.thing.ble.bleservice.BleService
+import com.v2x.thing.ble.bleservice.ServiceType
 import com.v2x.thing.ble.execute
 import java.io.ByteArrayOutputStream
 import java.util.*
@@ -130,7 +131,7 @@ class GxxStandParser private constructor() : Parser {
                     val pair = pairBlockingQueue.take()
                     val type = convert(pair.first)
                     println("data type = ${type.desc}")
-                    val dispatchers = BleService.INSTANCE.getDispatchers()
+                    val dispatchers = BleService.INSTANCE.getDispatchers(ServiceType.GXX)
                     when (type) {
 //                        DataType.BSM -> dispatchers.forEach { it.dispatchBsm(BsmHandler.handleBsmDecode(pair.second)) }
 //                        DataType.MAP -> dispatchers.forEach { it.dispatchMap(MapHandler.handleMapDecode(pair.second)) }
