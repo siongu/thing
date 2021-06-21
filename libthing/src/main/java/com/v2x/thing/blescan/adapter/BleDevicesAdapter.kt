@@ -87,19 +87,19 @@ class BleDevicesAdapter(
             view = convertView
             viewHolder = view.tag as ViewHolder
         }
-//        item.name.run {
-//            view.tv_name.text = this
-//            viewHolder.tvName.visibility = if (this.isNullOrBlank()) View.GONE else View.VISIBLE
-//        }
-//        item.mac.run {
-//            view.tv_mac.text = this
-//            viewHolder.tvMac.visibility = if (this.isNullOrBlank()) View.GONE else View.VISIBLE
-//        }
-        viewHolder.tvMac.visibility = View.GONE
-        val text =
-            if (item.name.isNullOrBlank()) if (item.mac.isNullOrBlank()) "" else item.mac else item.name
-        viewHolder.tvName.text = text
-        viewHolder.tvName.visibility = View.VISIBLE
+        item.name.run {
+            viewHolder.tvName.text = this
+            viewHolder.tvName.visibility = if (this.isNullOrBlank()) View.GONE else View.VISIBLE
+        }
+        item.mac.run {
+            viewHolder.tvMac.text = this
+            viewHolder.tvMac.visibility = if (this.isNullOrBlank()) View.GONE else View.VISIBLE
+        }
+//        viewHolder.tvMac.visibility = View.GONE
+//        val text =
+//            if (item.name.isNullOrBlank()) if (item.mac.isNullOrBlank()) "" else item.mac else item.name
+//        viewHolder.tvName.text = text
+//        viewHolder.tvName.visibility = View.VISIBLE
         val resid =
             if (position == 0 && count == 1) R.drawable.bg_ble_list_item_single
             else if (position == 0) R.drawable.bg_ble_list_item_top
