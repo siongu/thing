@@ -195,7 +195,7 @@ class BluetoothActivity : V2XBaseActivity(), BluetoothView {
                         BleManager.getInstance().setMtu(bleDevice, 512, object :
                             BleMtuChangedCallback() {
                             override fun onSetMTUFailure(exception: BleException?) {
-                                println("set mtu fail,ble最大传输长度:20")
+                                println("set mtu fail")
                                 // open notify
                                 openNotify(bleDevice, onNotifyListener)
                             }
@@ -207,7 +207,7 @@ class BluetoothActivity : V2XBaseActivity(), BluetoothView {
                             }
                         })
                     } else {
-                        println("ble最大传输长度:20")
+                        println("ble最大传输长度:23")
                         // open notify
                         openNotify(bleDevice, onNotifyListener)
                     }

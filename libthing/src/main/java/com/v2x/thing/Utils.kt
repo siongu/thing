@@ -2,16 +2,22 @@ package com.v2x.thing
 
 import android.app.Activity
 import android.content.Context
+import android.location.Location
 import android.location.LocationManager
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.v2x.thing.model.LatLng
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
 import java.lang.reflect.Type
+import java.math.BigDecimal
+import java.math.RoundingMode
+import kotlin.math.PI
+import kotlin.math.atan2
 
 
 val handler = Handler(Looper.getMainLooper())
@@ -40,7 +46,7 @@ fun handleOnUiThreadDelay(task: Runnable, delayInMillis: Long = 0L) {
     handler.postDelayed(task, delayInMillis)
 }
 
-fun removeCallbacksAndMessages(token: Any?=null) {
+fun removeCallbacksAndMessages(token: Any? = null) {
     handler.removeCallbacksAndMessages(token)
 }
 
@@ -95,4 +101,20 @@ inline fun <reified T> getAssetAsData(context: Context, fileName: String): T {
 fun Activity.isGPSOpen(): Boolean {
     val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
     return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+}
+
+fun headingBetweenPoints(start: LatLng, end: LatLng): Double {
+    val y: Double = end.latitude - start.latitude
+    val x: Double = end.longitude - start.longitude
+    var angle = (PI / 2 - atan2(y, x)).rm(2)
+    println("heading:$angle")
+    return Math.toDegrees(angle)
+}
+
+fun Number?.rm(scale: Int): Double {
+    return if (this == null) {
+        BigDecimal(0).setScale(scale, RoundingMode.HALF_UP).toDouble()
+    } else {
+        BigDecimal(this.toDouble()).setScale(scale, RoundingMode.HALF_UP).toDouble()
+    }
 }

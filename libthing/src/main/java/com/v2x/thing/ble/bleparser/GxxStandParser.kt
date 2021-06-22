@@ -138,7 +138,7 @@ class GxxStandParser private constructor() : Parser {
 //                        DataType.RSI -> dispatchers.forEach { it.dispatchRsi(RsiHandler.handleRsiDecode(pair.second)) }
 //                        DataType.RSM -> dispatchers.forEach { it.dispatchRsm(RsmHandler.handleRsmDecode(pair.second)) }
 //                        DataType.SPAT -> dispatchers.forEach { it.dispatchSpat(SpatHandler.handleSpatDecode(pair.second)) }
-                        else -> dispatchers.forEach {
+                        DataType.OTHER -> dispatchers.forEach {
                             val result = String(pair.second, Charsets.UTF_8)
                             Log.d(TAG, "received ble data：$result")
                             it.dispatch(result)
@@ -161,6 +161,7 @@ class GxxStandParser private constructor() : Parser {
             else -> DataType.OTHER
         }
     }
+
     enum class DataType(var type: Int, var desc: String) {
         BSM(0x11, "bsm"),
         MAP(0x22, "map"),

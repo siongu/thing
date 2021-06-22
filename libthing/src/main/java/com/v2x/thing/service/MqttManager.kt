@@ -1,6 +1,8 @@
 package com.v2x.thing.service
 
 import android.app.Service
+import android.content.Context
+import android.content.Context.CONNECTIVITY_SERVICE
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.os.Binder
@@ -11,60 +13,54 @@ import org.eclipse.paho.client.mqttv3.*
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
-abstract class BaseMqttService : Service() {
-    private val dispatchers = mutableSetOf<MqttDispatcher>()
+class MqttManager private constructor(private val context: Context, builder: Builder) {
+    private var factory: MqttConfigFactory
+    private var dispatchers: List<MqttDispatcher>
     private var mqttAndroidClient: MqttAndroidClient? = null
     private var mMqttConnectOptions: MqttConnectOptions? = null
     private lateinit var info: MqttConfig
-    protected val tag = this::class.simpleName
+    private val tag = this::class.simpleName
     private val lock = Any()
     private val scheduledPool = ScheduledThreadPoolExecutor(1)
-    override fun onCreate() {
-        super.onCreate()
-        Log.d(tag, "onCreate")
-    }
 
-    protected abstract fun onCreateFactory(): MqttConfigFactory
-
-
-    override fun onBind(intent: Intent): IBinder? {
-        Log.d(tag, "onBind")
+    init {
+        factory = builder.factory
+        dispatchers = builder.dispatchers
         init()
-        connectMqtt()
-        return DispatcherHandlerImpl()
     }
 
-    override fun onRebind(intent: Intent?) {
-        Log.d(tag, "onReBind")
-        connectMqtt()
-        super.onRebind(intent)
-    }
+    class Builder(private val context: Context) {
+        lateinit var factory: MqttConfigFactory
+        val dispatchers = mutableListOf<MqttDispatcher>()
+        fun factory(factory: MqttConfigFactory): Builder {
+            this.factory = factory
+            return this
+        }
 
-    override fun onUnbind(intent: Intent?): Boolean {
-        Log.d(tag, "onUnbind")
-        return super.onUnbind(intent)
+        fun addDispatcher(dispatcher: MqttDispatcher): Builder {
+            dispatchers.add(dispatcher)
+            return this
+        }
+
+        fun build(): MqttManager {
+            return MqttManager(context, this)
+        }
     }
 
     private fun connectMqtt() {
-        doConnect()
         doConnectAsync().run {
             scheduledPool.execute(this)
         }
     }
 
-    private fun doConnect() {
-    }
-
     private fun doConnectAsync(): Runnable {
         return Runnable {
-            synchronized(lock) {
-                try {
-                    doClientConnection()
-                    println("connecting...")
-                } catch (e: Exception) {
-                    println("connecting fail!,Exception=${e.message} ")
-                    e.printStackTrace()
-                }
+            try {
+                doClientConnection()
+                println("connecting...")
+            } catch (e: Exception) {
+                println("connecting fail!,Exception=${e.message} ")
+                e.printStackTrace()
             }
         }
     }
@@ -73,9 +69,8 @@ abstract class BaseMqttService : Service() {
      * 初始化
      */
     private fun init() {
-        val factory = onCreateFactory()
         info = factory.create()
-        mqttAndroidClient = MqttAndroidClient(this, info.serverUri, info.clientId)
+        mqttAndroidClient = MqttAndroidClient(context, info.serverUri, info.clientId)
         mqttAndroidClient?.setCallback(mqttCallback) //设置监听订阅消息的回调
         mMqttConnectOptions = MqttConnectOptions().apply {
             isCleanSession = true //设置是否清除缓存
@@ -120,7 +115,7 @@ abstract class BaseMqttService : Service() {
     private val isConnectIsNormal: Boolean
         get() {
             val connectivityManager =
-                this.applicationContext.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+                context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
             val info = connectivityManager.activeNetworkInfo
             return if (info != null && info.isAvailable) {
                 val name = info.typeName
@@ -183,30 +178,18 @@ abstract class BaseMqttService : Service() {
         }
     }
 
-    override fun onDestroy() {
-        Log.d(tag, "onDestroy")
+    fun start() {
+        connectMqtt()
+    }
+
+    private fun close() {
         try {
             mqttAndroidClient?.disconnect()//断开连接
             mqttAndroidClient?.unregisterResources()
+            mqttAndroidClient?.close()
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        super.onDestroy()
-    }
-
-    inner class DispatcherHandlerImpl : Binder(), IMqttDispatcherHandler {
-
-        override fun register(dispatcher: MqttDispatcher) {
-            dispatchers.add(dispatcher)
-        }
-
-        override fun unRegister(dispatcher: MqttDispatcher) {
-            dispatchers.remove(dispatcher)
-        }
-
-        override fun clean() {
-        }
-
     }
 }
 

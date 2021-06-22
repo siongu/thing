@@ -1,8 +1,11 @@
 package com.v2x.thing.ble.bleparser
 
+import android.location.Location
 import com.v2x.thing.ble.bleservice.BleService
 import com.v2x.thing.ble.bleservice.ServiceType
+import com.v2x.thing.headingBetweenPoints
 import com.v2x.thing.model.GGAInfo
+import com.v2x.thing.model.LatLng
 import net.sf.marineapi.nmea.event.SentenceEvent
 import net.sf.marineapi.nmea.event.SentenceListener
 import net.sf.marineapi.nmea.io.SentenceReader
@@ -36,7 +39,8 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
         override fun readingPaused() {}
         override fun readingStarted() {}
         override fun readingStopped() {}
-        var ggaInfo: GGAInfo? = null
+        private var ggaInfo: GGAInfo? = null
+        private var lastGGAInfo: GGAInfo? = null
         override fun sentenceRead(event: SentenceEvent) {
             println("parse for device type \"${type.desc}\"")
             try {
@@ -64,7 +68,14 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
                         gpsFixQuality = gga.fixQuality.toInt()
                         satelliteCount = gga.satelliteCount
                         gpsTimeInMills = gga.time.milliseconds
+                        lastGGAInfo?.let { last ->
+                            course = headingBetweenPoints(
+                                LatLng(last.latitude, last.longitude),
+                                LatLng(latitude, longitude)
+                            )
+                        }
                         dispatchGGA(this)
+                        lastGGAInfo = this
                     }
                 }
             } catch (e: Exception) {

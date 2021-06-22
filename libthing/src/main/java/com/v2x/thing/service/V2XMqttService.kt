@@ -4,11 +4,11 @@ import android.util.Log
 
 /**
  */
-class V2XMqttService : BaseMqttService() {
-    override fun onCreate() {
-        isCreate = true
-        super.onCreate()
-    }
+class V2XMqttService {
+//    override fun onCreate() {
+//        isCreate = true
+//        super.onCreate()
+//    }
 
     companion object {
         private var isCreate = false
@@ -25,7 +25,7 @@ class V2XMqttService : BaseMqttService() {
         }
     }
 
-    override fun onCreateFactory(): MqttConfigFactory {
-        return mqConfigFactory
-    }
+//    override fun onCreateFactory(): MqttConfigFactory {
+//        return mqConfigFactory
+//    }
 }
