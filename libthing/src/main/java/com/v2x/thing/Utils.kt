@@ -78,6 +78,11 @@ fun <T> String.fromJson(type: Type): T {
     return Gson().fromJson(this, type)
 }
 
+fun Activity.isGPSOpen(): Boolean {
+    val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+}
+
 //读取asset中的文件成一个data bean
 inline fun <reified T> getAssetAsData(context: Context, fileName: String): T {
     val stringBuilder = StringBuilder();
@@ -98,17 +103,34 @@ inline fun <reified T> getAssetAsData(context: Context, fileName: String): T {
     return Gson().fromJson(stringBuilder.toString(), T::class.java)
 }
 
-fun Activity.isGPSOpen(): Boolean {
-    val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-    return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-}
-
 fun headingBetweenPoints(start: LatLng, end: LatLng): Double {
     val y: Double = end.latitude - start.latitude
     val x: Double = end.longitude - start.longitude
-    var angle = (PI / 2 - atan2(y, x)).rm(2)
-    println("heading:$angle")
-    return Math.toDegrees(angle)
+    var angle = PI / 2 - atan2(y, x)
+    val degree = Math.toDegrees(angle).rm(3)
+    println("course:$degree")
+    return degree
+}
+
+fun speedBetweenPoints(start: LatLng, end: LatLng, durationInMills: Long): Double {
+    val startLatitude = start.latitude
+    val startLongitude = start.longitude
+    val endLatitude = end.latitude
+    val endLongitude = end.longitude
+    val results = FloatArray(2)
+    Location.distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude, results)
+    val distance = results[0]
+    var speedInMeter = 0.0f
+    println("distance:${results[0]}")
+    if (durationInMills <= 0) {
+        println("duration cannot be a negative number.")
+    } else {
+        speedInMeter = distance * 1000 / durationInMills
+    }
+    val kn2meter = 0.5144444
+    val speedInKn = (speedInMeter / kn2meter).rm(3)
+    println("distance:$distance,durationInMills:$durationInMills,speedInKn:$speedInKn")
+    return speedInKn
 }
 
 fun Number?.rm(scale: Int): Double {

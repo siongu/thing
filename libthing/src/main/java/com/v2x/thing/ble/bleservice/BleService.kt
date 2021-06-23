@@ -32,6 +32,7 @@ class BleService private constructor() : IDispatcherHandler {
         CONNECTED(0), DISCONNECTED(-1), NOTIFY_OPEN(1), NOTIFY_STOP(-2)
     }
 
+    private var tempType = ServiceType.CP200_SINGLE_OUTPUT
     private val dispatchers = mutableMapOf<String, MutableSet<Dispatcher>>()
     private var onConnectListener: BleGattCallback? = null
     private var notifyListener: OnNotifyListener? = null
@@ -39,13 +40,16 @@ class BleService private constructor() : IDispatcherHandler {
     private val bleParsers = mutableMapOf<String, Parser>()
 
     init {
-        bleParsers[UUID_SERVICE_GXX.toString()] = GxxStandParser.newInstance()
-        bleParsers[UUID_SERVICE_MENG_XIN_TK1306.toString()] = GpsNmeaParser.newInstance(ServiceType.TK1306)
-        bleParsers[UUID_SERVICE_MENG_XIN_CP200.toString()] = GpsNmeaParser.newInstance(ServiceType.CP200)
+        bleParsers[ServiceType.GXX.name] = GxxStandParser.newInstance()
+        bleParsers[ServiceType.TK1306.name] = GpsNmeaParser.newInstance(ServiceType.TK1306)
+        bleParsers[ServiceType.CP200_SINGLE_OUTPUT.name] =
+            GpsNmeaParser.newInstance(ServiceType.CP200_SINGLE_OUTPUT)
+        bleParsers[ServiceType.CP200_DUAL_OUTPUT.name] =
+            GpsNmeaParser.newInstance(ServiceType.CP200_DUAL_OUTPUT)
         addConnectedDeviceWrapper(
             DeviceWrapper(
                 null,
-                bleParsers[UUID_SERVICE_GXX.toString()],
+                bleParsers[ServiceType.GXX.name],
                 UUID_SERVICE_GXX.toString(),
                 UUID_NOTIFY_GXX.toString()
             )
@@ -53,7 +57,7 @@ class BleService private constructor() : IDispatcherHandler {
         addConnectedDeviceWrapper(
             DeviceWrapper(
                 null,
-                bleParsers[UUID_SERVICE_MENG_XIN_TK1306.toString()],
+                bleParsers[ServiceType.TK1306.name],
                 UUID_SERVICE_MENG_XIN_TK1306.toString(),
                 UUID_NOTIFY_MENG_XIN_TK1306.toString()
             )
@@ -61,7 +65,7 @@ class BleService private constructor() : IDispatcherHandler {
         addConnectedDeviceWrapper(
             DeviceWrapper(
                 null,
-                bleParsers[UUID_SERVICE_MENG_XIN_CP200.toString()],
+                bleParsers[ServiceType.CP200_SINGLE_OUTPUT.name],
                 UUID_SERVICE_MENG_XIN_CP200.toString(),
                 UUID_NOTIFY_MENG_XIN_CP200.toString()
             )
@@ -113,26 +117,30 @@ class BleService private constructor() : IDispatcherHandler {
     }
 
     fun getDispatchers(type: ServiceType): List<Dispatcher> {
-        return dispatchers[type.uuid].run {
+        return dispatchers[type.name].run {
             if (this == null) ArrayList() else ArrayList(this)
         }
     }
 
     override fun register(type: ServiceType, dispatcher: Dispatcher) {
-        var dis = dispatchers[type.uuid]
+        var dis = dispatchers[type.name]
         if (dis == null) {
             dis = mutableSetOf()
-            dispatchers[type.uuid] = dis
+            dispatchers[type.name] = dis
         }
         dis.add(dispatcher)
     }
 
     override fun unRegister(type: ServiceType, dispatcher: Dispatcher) {
-        dispatchers[type.uuid]?.remove(dispatcher)
+        dispatchers[type.name]?.remove(dispatcher)
     }
 
     override fun clean() {
         dispatchers.clear()
+    }
+
+    fun serviceType(type: ServiceType) {
+        tempType = type
     }
 
     fun isConnectToDevice(bleDevice: BleDevice?): Boolean {
@@ -314,7 +322,7 @@ class BleService private constructor() : IDispatcherHandler {
         }
         BleManager.getInstance()
             .notify(bleDevice, uuidService, uuidNotify, object : BleNotifyCallback() {
-                val parser = getParser(uuidService)
+                val parser = getParser(tempType.name)
                 override fun onCharacteristicChanged(data: ByteArray?) {
                     data?.run {
                         parser?.parseData(data)

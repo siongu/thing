@@ -1,11 +1,11 @@
 package com.v2x.thing.ble.bleparser
 
-import android.location.Location
 import com.v2x.thing.ble.bleservice.BleService
 import com.v2x.thing.ble.bleservice.ServiceType
 import com.v2x.thing.headingBetweenPoints
 import com.v2x.thing.model.GGAInfo
 import com.v2x.thing.model.LatLng
+import com.v2x.thing.speedBetweenPoints
 import net.sf.marineapi.nmea.event.SentenceEvent
 import net.sf.marineapi.nmea.event.SentenceListener
 import net.sf.marineapi.nmea.io.SentenceReader
@@ -14,6 +14,7 @@ import net.sf.marineapi.nmea.sentence.RMCSentence
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.util.concurrent.Executors
+import java.util.regex.Matcher
 
 
 class GpsNmeaParser private constructor(private val type: ServiceType) : Parser {
@@ -48,11 +49,54 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
             println("readingStopped")
         }
 
-        private var ggaInfo: GGAInfo = GGAInfo()
+        private var ggaInfo: GGAInfo? = null
         private var lastGGAInfo: GGAInfo? = null
         private var frameAvailable = false
         override fun sentenceRead(event: SentenceEvent) {
             println("parse for device type \"${type.desc}\"")
+            when (type) {
+                ServiceType.CP200_SINGLE_OUTPUT -> singleData(event)
+                ServiceType.TK1306,
+                ServiceType.CP200_DUAL_OUTPUT -> dualData(event)
+            }
+        }
+
+        private fun singleData(event: SentenceEvent) {
+            try {
+                val s = event.sentence
+                if ("GGA" == s.sentenceId) {
+                    val gga = s as GGASentence
+                    println("GGA: $gga")
+                    ggaInfo = GGAInfo()
+                    ggaInfo?.apply {
+                        latitude = gga.position.latitude
+                        longitude = gga.position.longitude
+                        altitude = gga.altitude
+                        gpsFixQuality = gga.fixQuality.toInt()
+                        satelliteCount = gga.satelliteCount
+                        gpsTimeInMills = gga.time.milliseconds
+                        timestamp = System.currentTimeMillis()
+                        lastGGAInfo?.let { last ->
+                            course = headingBetweenPoints(
+                                LatLng(last.latitude, last.longitude),
+                                LatLng(latitude, longitude)
+                            )
+                            speed = speedBetweenPoints(
+                                LatLng(last.latitude, last.longitude),
+                                LatLng(latitude, longitude),
+                                durationInMills = (timestamp - last.timestamp)
+                            )
+                        }
+                        dispatchGGA(this)
+                        lastGGAInfo = this
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        private fun dualData(event: SentenceEvent) {
             try {
                 val s = event.sentence
                 if ("RMC" == s.sentenceId) {
@@ -69,7 +113,6 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
                         ggaInfo?.apply {
                             dispatchGGA(this)
                             lastGGAInfo = this
-                            ggaInfo.reset()
                         }
                     }
                 } else if ("GGA" == s.sentenceId) {
@@ -84,10 +127,15 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
                         gpsTimeInMills = gga.time.milliseconds
                         timestamp = System.currentTimeMillis()
                         lastGGAInfo?.let { last ->
-//                            course = headingBetweenPoints(
-//                                LatLng(last.latitude, last.longitude),
-//                                LatLng(latitude, longitude)
-//                            )
+                            course = headingBetweenPoints(
+                                LatLng(last.latitude, last.longitude),
+                                LatLng(latitude, longitude)
+                            )
+                            speed = speedBetweenPoints(
+                                LatLng(last.latitude, last.longitude),
+                                LatLng(latitude, longitude),
+                                durationInMills = (timestamp - last.timestamp)
+                            )
                         }
                     }
                     if (!frameAvailable) {
@@ -97,7 +145,6 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
                         ggaInfo?.apply {
                             dispatchGGA(this)
                             lastGGAInfo = this
-                            ggaInfo.reset()
                         }
                     }
                 }
@@ -124,12 +171,25 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
 
     private val sb = StringBuffer()
     private fun task(data: ByteArray) {
-        println("raw data:${data.contentToString()}")
+        val raw = data.contentToString()
+        println("raw data:${raw}")
         sb.append(String(data))
-        if (sb.length > 10000) {
+        if (sb.length > 20000) {
             sb.delete(0, sb.lastIndexOf("$"))
         }
         println("nmea:$sb")
-        pipOut.write(data)
+        var rd = nmeaFilter(data)
+        pipOut.write(rd)
+    }
+
+    private fun nmeaFilter(nmeaData: ByteArray): ByteArray {
+        val raw = String(nmeaData)
+        var r = raw.replace(Regex.fromLiteral("\n"), "")
+            .replace(Regex.fromLiteral("\r"), "")
+            .replace(Regex.fromLiteral(" "), "")
+            .replace(Regex.fromLiteral("$"), Matcher.quoteReplacement("\r\n$"))
+        val rd = r.toByteArray()
+        println("nmeaFilter:${String(rd)}")
+        return rd
     }
 }

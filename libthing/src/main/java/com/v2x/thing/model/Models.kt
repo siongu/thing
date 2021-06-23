@@ -46,19 +46,7 @@ data class GGAInfo(
     var satelliteCount: Int = 0,
     var gpsTimeInMills: Long = 0,
     var timestamp: Long = System.currentTimeMillis()
-) {
-    fun reset() {
-        latitude = 0.0
-        longitude = 0.0
-        altitude = 0.0
-        speed = 0.0
-        course = 0.0
-        gpsFixQuality = -1
-        satelliteCount = 0
-        gpsTimeInMills = 0
-        timestamp = 0
-    }
-}
+)
 
 data class LatLng(
     val latitude: Double,
