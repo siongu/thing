@@ -39,26 +39,26 @@ class MqttServiceManager private constructor(private val context: Context) {
     }
 
     fun bindMqttService(dispatcher: MqttDispatcher?) {
-        MqttServiceConnectionImpl(dispatcher).let { conn ->
-            conns[defaultKey] = conns[defaultKey]
-                ?: mutableListOf<MqttServiceConnection>().apply {
-                    conns[defaultKey] = this
-                }
-            conns[defaultKey]?.add(conn)
-            context.bindService(
-                Intent(context, V2XMqttService::class.java),
-                conn,
-                BIND_AUTO_CREATE
-            )
-        }
+//        MqttServiceConnectionImpl(dispatcher).let { conn ->
+//            conns[defaultKey] = conns[defaultKey]
+//                ?: mutableListOf<MqttServiceConnection>().apply {
+//                    conns[defaultKey] = this
+//                }
+//            conns[defaultKey]?.add(conn)
+//            context.bindService(
+//                Intent(context, V2XMqttService::class.java),
+//                conn,
+//                BIND_AUTO_CREATE
+//            )
+//        }
     }
 
     fun unbindMqttService() {
-        conns[defaultKey]?.onEach {
-            context.unbindService(it)
-            (it as MqttServiceConnectionImpl).dispatcher?.apply {
-                it.removeDispatcher(this)
-            }
-        }
+//        conns[defaultKey]?.onEach {
+//            context.unbindService(it)
+//            (it as MqttServiceConnectionImpl).dispatcher?.apply {
+//                it.removeDispatcher(this)
+//            }
+//        }
     }
 }

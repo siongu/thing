@@ -10,7 +10,6 @@ import android.util.Log
 import android.view.View
 import android.widget.AbsListView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import com.clj.fastble.BleManager
 import com.clj.fastble.callback.BleGattCallback
@@ -31,8 +30,6 @@ import com.v2x.thing.blescan.adapter.BleDevicesAdapter
 import com.v2x.thing.databinding.ActivityBluetoothBinding
 import com.v2x.thing.handleOnUiThreadDelay
 import com.v2x.thing.removeCallbacksAndMessages
-import com.v2x.thing.service.MqttDispatcher
-import com.v2x.thing.service.MqttServiceManager
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 

@@ -19,7 +19,6 @@
             android:windowSoftInputMode="stateHidden|adjustResize" />
         <!-- MQTT -->
         <service android:name="org.eclipse.paho.android.service.MqttService" />
-        <service android:name="com.v2x.thing.service.V2XMqttService" />
     </application>
 
 </manifest>
