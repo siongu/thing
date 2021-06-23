@@ -5,6 +5,7 @@ import com.v2x.thing.ble.bleservice.ServiceType
 import com.v2x.thing.headingBetweenPoints
 import com.v2x.thing.model.GGAInfo
 import com.v2x.thing.model.LatLng
+import com.v2x.thing.model.SpeedInfo
 import com.v2x.thing.speedBetweenPoints
 import net.sf.marineapi.nmea.event.SentenceEvent
 import net.sf.marineapi.nmea.event.SentenceListener
@@ -75,17 +76,17 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
                         gpsFixQuality = gga.fixQuality.toInt()
                         satelliteCount = gga.satelliteCount
                         gpsTimeInMills = gga.time.milliseconds
-                        timestamp = System.currentTimeMillis()
                         lastGGAInfo?.let { last ->
                             course = headingBetweenPoints(
                                 LatLng(last.latitude, last.longitude),
                                 LatLng(latitude, longitude)
                             )
-                            speed = speedBetweenPoints(
+                            val sp = speedBetweenPoints(
                                 LatLng(last.latitude, last.longitude),
                                 LatLng(latitude, longitude),
-                                durationInMills = (timestamp - last.timestamp)
+                                durationInMills = (gpsTimeInMills - last.gpsTimeInMills)
                             )
+                            speed = if (sp == Double.MAX_VALUE) last.speed else sp
                         }
                         dispatchGGA(this)
                         lastGGAInfo = this
@@ -102,15 +103,18 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
                 if ("RMC" == s.sentenceId) {
                     val rmc = s as RMCSentence
                     println("RMC: $rmc")
-                    ggaInfo?.apply {
-                        speed = rmc.speed
-                        course = rmc.course
-                    }
                     if (!frameAvailable) {
                         frameAvailable = true
+                        ggaInfo = GGAInfo()
+                        ggaInfo?.apply {
+                            speed = rmc.speed
+                            course = rmc.course
+                        }
                     } else {
                         frameAvailable = false
                         ggaInfo?.apply {
+                            speed = rmc.speed
+                            course = rmc.course
                             dispatchGGA(this)
                             lastGGAInfo = this
                         }
@@ -118,30 +122,13 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
                 } else if ("GGA" == s.sentenceId) {
                     val gga = s as GGASentence
                     println("GGA: $gga")
-                    ggaInfo?.apply {
-                        latitude = gga.position.latitude
-                        longitude = gga.position.longitude
-                        altitude = gga.altitude
-                        gpsFixQuality = gga.fixQuality.toInt()
-                        satelliteCount = gga.satelliteCount
-                        gpsTimeInMills = gga.time.milliseconds
-                        timestamp = System.currentTimeMillis()
-                        lastGGAInfo?.let { last ->
-                            course = headingBetweenPoints(
-                                LatLng(last.latitude, last.longitude),
-                                LatLng(latitude, longitude)
-                            )
-                            speed = speedBetweenPoints(
-                                LatLng(last.latitude, last.longitude),
-                                LatLng(latitude, longitude),
-                                durationInMills = (timestamp - last.timestamp)
-                            )
-                        }
-                    }
                     if (!frameAvailable) {
                         frameAvailable = true
+                        ggaInfo = GGAInfo()
+                        setGGAInfo(gga)
                     } else {
                         frameAvailable = false
+                        setGGAInfo(gga)
                         ggaInfo?.apply {
                             dispatchGGA(this)
                             lastGGAInfo = this
@@ -152,6 +139,30 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
                 e.printStackTrace()
             }
         }
+
+        private fun setGGAInfo(gga: GGASentence) {
+            ggaInfo?.apply {
+                latitude = gga.position.latitude
+                longitude = gga.position.longitude
+                altitude = gga.altitude
+                gpsFixQuality = gga.fixQuality.toInt()
+                satelliteCount = gga.satelliteCount
+                gpsTimeInMills = gga.time.milliseconds
+                lastGGAInfo?.let { last ->
+                    course = headingBetweenPoints(
+                        LatLng(last.latitude, last.longitude),
+                        LatLng(latitude, longitude)
+                    )
+                    val sp = speedBetweenPoints(
+                        LatLng(last.latitude, last.longitude),
+                        LatLng(latitude, longitude),
+                        durationInMills = (gpsTimeInMills - last.gpsTimeInMills)
+                    )
+                    speed = if (sp == Double.MAX_VALUE) last.speed else sp
+                }
+            }
+        }
+
 
     }
 

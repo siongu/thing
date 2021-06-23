@@ -54,3 +54,9 @@ data class LatLng(
     val altitude: Double = 0.0
 )
 
+data class SpeedInfo(
+    var distance: Double = 0.0,
+    var durationInMills: Long = 0,
+    var speedInKn: Double = 0.0
+)
+

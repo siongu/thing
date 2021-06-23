@@ -7,9 +7,11 @@ import android.location.LocationManager
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.v2x.thing.model.LatLng
+import com.v2x.thing.model.SpeedInfo
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -108,11 +110,16 @@ fun headingBetweenPoints(start: LatLng, end: LatLng): Double {
     val x: Double = end.longitude - start.longitude
     var angle = PI / 2 - atan2(y, x)
     val degree = Math.toDegrees(angle).rm(3)
-    println("course:$degree")
+    Log.d("course", "$degree")
     return degree
 }
 
-fun speedBetweenPoints(start: LatLng, end: LatLng, durationInMills: Long): Double {
+fun speedBetweenPoints(
+    start: LatLng,
+    end: LatLng,
+    durationInMills: Long,
+    speedInfo: SpeedInfo? = null
+): Double {
     val startLatitude = start.latitude
     val startLongitude = start.longitude
     val endLatitude = end.latitude
@@ -120,16 +127,22 @@ fun speedBetweenPoints(start: LatLng, end: LatLng, durationInMills: Long): Doubl
     val results = FloatArray(2)
     Location.distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude, results)
     val distance = results[0]
-    var speedInMeter = 0.0f
+    var speedInMeter = Double.MAX_VALUE
     println("distance:${results[0]}")
-    if (durationInMills <= 0) {
-        println("duration cannot be a negative number.")
+    if (durationInMills <= 0 || durationInMills <= Int.MIN_VALUE) {
+        Log.d("speed", "duration is invalid:$durationInMills")
+        return speedInMeter
     } else {
-        speedInMeter = distance * 1000 / durationInMills
+        speedInMeter = distance * 1000.0 / durationInMills
     }
     val kn2meter = 0.5144444
     val speedInKn = (speedInMeter / kn2meter).rm(3)
-    println("distance:$distance,durationInMills:$durationInMills,speedInKn:$speedInKn")
+    speedInfo?.apply {
+        this.distance = distance.toDouble()
+        this.durationInMills = durationInMills
+        this.speedInKn = speedInKn
+    }
+    Log.d("speed", "distance:$distance,durationInMills:$durationInMills,speedInKn:$speedInKn")
     return speedInKn
 }
 
