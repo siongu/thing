@@ -32,7 +32,7 @@ class MqttManager private constructor(private val context: Context, builder: Bui
     class Builder(private val context: Context) {
         lateinit var factory: MqttConfigFactory
         val dispatchers = mutableListOf<MqttDispatcher>()
-        fun factory(factory: MqttConfigFactory): Builder {
+        fun configure(factory: MqttConfigFactory): Builder {
             this.factory = factory
             return this
         }
@@ -178,11 +178,11 @@ class MqttManager private constructor(private val context: Context, builder: Bui
         }
     }
 
-    fun start() {
+    fun connect() {
         connectMqtt()
     }
 
-    private fun close() {
+    fun close() {
         try {
             mqttAndroidClient?.disconnect()//断开连接
             mqttAndroidClient?.unregisterResources()

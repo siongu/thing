@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.IBinder
 import androidx.collection.arrayMapOf
 
+@Deprecated("use MqttManager instead")
 class MqttServiceManager private constructor(private val context: Context) {
     companion object {
         fun getInstance(context: Context): MqttServiceManager {

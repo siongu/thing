@@ -4,6 +4,7 @@ import android.util.Log
 
 /**
  */
+@Deprecated("")
 class V2XMqttService {
 //    override fun onCreate() {
 //        isCreate = true

@@ -36,29 +36,43 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
     }
 
     inner class MultiSentenceListener : SentenceListener {
-        override fun readingPaused() {}
-        override fun readingStarted() {}
-        override fun readingStopped() {}
-        private var ggaInfo: GGAInfo? = null
+        override fun readingPaused() {
+            println("readingPaused")
+        }
+
+        override fun readingStarted() {
+            println("readingStarted")
+        }
+
+        override fun readingStopped() {
+            println("readingStopped")
+        }
+
+        private var ggaInfo: GGAInfo = GGAInfo()
         private var lastGGAInfo: GGAInfo? = null
+        private var frameAvailable = false
         override fun sentenceRead(event: SentenceEvent) {
             println("parse for device type \"${type.desc}\"")
             try {
                 val s = event.sentence
                 if ("RMC" == s.sentenceId) {
-                    if (type == ServiceType.TK1306) {
-                        ggaInfo = GGAInfo()
-                    }
                     val rmc = s as RMCSentence
                     println("RMC: $rmc")
                     ggaInfo?.apply {
                         speed = rmc.speed
                         course = rmc.course
                     }
-                } else if ("GGA" == s.sentenceId) {
-                    if (type == ServiceType.CP200) {
-                        ggaInfo = GGAInfo()
+                    if (!frameAvailable) {
+                        frameAvailable = true
+                    } else {
+                        frameAvailable = false
+                        ggaInfo?.apply {
+                            dispatchGGA(this)
+                            lastGGAInfo = this
+                            ggaInfo.reset()
+                        }
                     }
+                } else if ("GGA" == s.sentenceId) {
                     val gga = s as GGASentence
                     println("GGA: $gga")
                     ggaInfo?.apply {
@@ -68,14 +82,23 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
                         gpsFixQuality = gga.fixQuality.toInt()
                         satelliteCount = gga.satelliteCount
                         gpsTimeInMills = gga.time.milliseconds
+                        timestamp = System.currentTimeMillis()
                         lastGGAInfo?.let { last ->
-                            course = headingBetweenPoints(
-                                LatLng(last.latitude, last.longitude),
-                                LatLng(latitude, longitude)
-                            )
+//                            course = headingBetweenPoints(
+//                                LatLng(last.latitude, last.longitude),
+//                                LatLng(latitude, longitude)
+//                            )
                         }
-                        dispatchGGA(this)
-                        lastGGAInfo = this
+                    }
+                    if (!frameAvailable) {
+                        frameAvailable = true
+                    } else {
+                        frameAvailable = false
+                        ggaInfo?.apply {
+                            dispatchGGA(this)
+                            lastGGAInfo = this
+                            ggaInfo.reset()
+                        }
                     }
                 }
             } catch (e: Exception) {
