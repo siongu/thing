@@ -112,6 +112,10 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
                         frameAvailable = true
                         ggaInfo = GGAInfo()
                         ggaInfo?.apply {
+                            rmc.position?.let { pos ->
+                                latitude = pos.latitude
+                                longitude = pos.longitude
+                            }
                             speed = rmc.speed
                             course = rmc.course
                         }
