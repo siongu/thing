@@ -81,6 +81,7 @@ class BleService private constructor() : IDispatcherHandler {
             .enableLog(true)
             .setOperateTimeout(5000)
             .setReConnectCount(3, 2000)
+            .initScanRule(BleScanRuleConfig.Builder().setAutoConnect(true).build())
     }
 
     fun enableLog(enable: Boolean): BleService {

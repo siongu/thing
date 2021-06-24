@@ -118,32 +118,39 @@ fun speedBetweenPoints(
     start: LatLng,
     end: LatLng,
     durationInMills: Long,
-    speedInfo: SpeedInfo? = null
 ): Double {
     val startLatitude = start.latitude
     val startLongitude = start.longitude
     val endLatitude = end.latitude
     val endLongitude = end.longitude
-    val results = FloatArray(2)
-    Location.distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude, results)
-    val distance = results[0]
-    var speedInMeter = Double.MAX_VALUE
-    println("distance:${results[0]}")
+    Log.d("speed", "startLocation:[$start],endLocation:[$end]")
+    val distance =
+        /*LocationRuler.*/getDistance(startLatitude, startLongitude, endLatitude, endLongitude)
+    var speedInMeter = -1.0
+    Log.d("speed", "distance:${distance}")
     if (durationInMills <= 0 || durationInMills <= Int.MIN_VALUE) {
         Log.d("speed", "duration is invalid:$durationInMills")
         return speedInMeter
     } else {
         speedInMeter = distance * 1000.0 / durationInMills
+        Log.d("speed", "speedInMeter:$speedInMeter")
     }
     val kn2meter = 0.5144444
     val speedInKn = (speedInMeter / kn2meter).rm(3)
-    speedInfo?.apply {
-        this.distance = distance.toDouble()
-        this.durationInMills = durationInMills
-        this.speedInKn = speedInKn
-    }
+
     Log.d("speed", "distance:$distance,durationInMills:$durationInMills,speedInKn:$speedInKn")
     return speedInKn
+}
+
+private fun getDistance(
+    startLatitude: Double,
+    startLongitude: Double,
+    endLatitude: Double,
+    endLongitude: Double
+): Float {
+    val results = FloatArray(2)
+    Location.distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude, results)
+    return results[0]
 }
 
 fun Number?.rm(scale: Int): Double {

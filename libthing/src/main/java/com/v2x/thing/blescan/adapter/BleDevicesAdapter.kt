@@ -128,7 +128,7 @@ class BleDevicesAdapter(
 //            view.visibility = View.INVISIBLE
 //            viewHolder.pb.visibility = View.VISIBLE
             startLoading(viewHolder.pb)
-            bleView?.connectDevice(item, object : BleSmartGattCallback() {
+            bleView.connectDevice(item, object : BleSmartGattCallback() {
                 override fun onStartConnect() {
 
                 }
@@ -143,7 +143,7 @@ class BleDevicesAdapter(
                     Log.d(TAG, "断开连接")
                     super.onDisConnected(isActiveDisConnected, device, gatt, status)
                     viewHolder.tvConnect.visibility = View.INVISIBLE
-//                    (tvConnect as TextView).text = "连接"
+        //                    (tvConnect as TextView).text = "连接"
                 }
 
                 override fun onConnectSuccess(
@@ -151,12 +151,12 @@ class BleDevicesAdapter(
                     gatt: BluetoothGatt?,
                     status: Int
                 ) {
-//                    notifyDataSetChanged()
-//                    tvConnect.visibility = View.VISIBLE
-//                    viewHolder.pbConnect.visibility = View.GONE
-//                    viewHolder.tvNext.visibility = View.VISIBLE
-//                    (tvConnect as TextView).text = "已连接"
-//                    tvConnect.isEnabled = false
+        //                    notifyDataSetChanged()
+        //                    tvConnect.visibility = View.VISIBLE
+        //                    viewHolder.pbConnect.visibility = View.GONE
+        //                    viewHolder.tvNext.visibility = View.VISIBLE
+        //                    (tvConnect as TextView).text = "已连接"
+        //                    tvConnect.isEnabled = false
                 }
 
                 @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -166,25 +166,25 @@ class BleDevicesAdapter(
                     exception: BleException?
                 ) {
                     super.onConnectFail(bleDevice, gatt, exception)
-//                    view.visibility = View.VISIBLE
+        //                    view.visibility = View.VISIBLE
                     stopLoading(viewHolder.pb)
                 }
 
             }, object : OnNotifyListener {
                 override fun onNotifySuccess() {
-//                    tvConnect.visibility = View.VISIBLE
-//                    viewHolder.pbConnect.visibility = View.GONE
+        //                    tvConnect.visibility = View.VISIBLE
+        //                    viewHolder.pbConnect.visibility = View.GONE
                     notifyDataSetChanged()
                     Log.d(TAG, "通知开启成功")
-//                    presenter.view?.showToast("通知开启成功")
+        //                    presenter.view?.showToast("通知开启成功")
                 }
 
                 override fun onNotifyFailure(e: Exception?) {
-//                    tvConnect.visibility = View.VISIBLE
-//                    viewHolder.pbConnect.visibility = View.GONE
+        //                    tvConnect.visibility = View.VISIBLE
+        //                    viewHolder.pbConnect.visibility = View.GONE
                     notifyDataSetChanged()
                     Log.d(TAG, "通知开启失败: error=${e?.message}")
-//                    presenter.view?.showError("通知开启失败: error=${e?.message}")
+        //                    presenter.view?.showError("通知开启失败: error=${e?.message}")
                 }
             })
 
