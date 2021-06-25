@@ -136,7 +136,7 @@ class MqttManager private constructor(private val context: Context, builder: Bui
     //MQTT是否连接成功的监听
     private val iMqttActionListener: IMqttActionListener = object : IMqttActionListener {
         override fun onSuccess(arg0: IMqttToken) {
-            Log.i(tag, "连接成功 ")
+            Log.i(tag, "连接成功:$info")
             try {
                 info.publishTopics.forEach { topic ->
                     mqttAndroidClient?.subscribe(topic, 2) //订阅主题，参数：主题、服务质量
