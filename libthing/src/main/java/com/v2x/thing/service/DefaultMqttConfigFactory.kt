@@ -2,7 +2,7 @@ package com.v2x.thing.service
 
 import java.util.*
 
-internal class DefaultMqttConfigFactory : MqttConfigFactory {
+class DefaultMqttConfigFactory : MqttConfigFactory {
     private val serverUri = "tcp://kmmnn.top:1885" //服务器地址（协议+地址+端口号）
     override fun create(): MqttConfig {
         val clientId = UUID.randomUUID().toString()
@@ -10,7 +10,7 @@ internal class DefaultMqttConfigFactory : MqttConfigFactory {
         return MqttConfig(
             serverUri = serverUri,
             clientId = clientId,
-            publishTopics = arrayListOf(
+            subscribeTopics = arrayListOf(
                 "gps-src-data/cp200"
             ),
             userName = "admin",

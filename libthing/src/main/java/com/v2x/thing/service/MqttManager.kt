@@ -1,12 +1,8 @@
 package com.v2x.thing.service
 
-import android.app.Service
 import android.content.Context
 import android.content.Context.CONNECTIVITY_SERVICE
-import android.content.Intent
 import android.net.ConnectivityManager
-import android.os.Binder
-import android.os.IBinder
 import android.util.Log
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
@@ -14,26 +10,27 @@ import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 class MqttManager private constructor(private val context: Context, builder: Builder) {
-    private var factory: MqttConfigFactory
+    private val TAG = this.javaClass.simpleName
+    private var configFactory: MqttConfigFactory
     private var dispatchers: List<MqttDispatcher>
     private var mqttAndroidClient: MqttAndroidClient? = null
     private var mMqttConnectOptions: MqttConnectOptions? = null
     private lateinit var info: MqttConfig
     private val tag = this::class.simpleName
-    private val lock = Any()
     private val scheduledPool = ScheduledThreadPoolExecutor(1)
 
     init {
-        factory = builder.factory
+        configFactory = builder.configFactory
         dispatchers = builder.dispatchers
         init()
     }
 
     class Builder(private val context: Context) {
-        lateinit var factory: MqttConfigFactory
+        lateinit var configFactory: MqttConfigFactory
+            private set
         val dispatchers = mutableListOf<MqttDispatcher>()
-        fun configure(factory: MqttConfigFactory): Builder {
-            this.factory = factory
+        fun configure(configFactory: MqttConfigFactory): Builder {
+            this.configFactory = configFactory
             return this
         }
 
@@ -69,7 +66,7 @@ class MqttManager private constructor(private val context: Context, builder: Bui
      * 初始化
      */
     private fun init() {
-        info = factory.create()
+        info = configFactory.create()
         mqttAndroidClient = MqttAndroidClient(context, info.serverUri, info.clientId)
         mqttAndroidClient?.setCallback(mqttCallback) //设置监听订阅消息的回调
         mMqttConnectOptions = MqttConnectOptions().apply {
@@ -80,7 +77,7 @@ class MqttManager private constructor(private val context: Context, builder: Bui
             password = info.password.toCharArray() //设置密码
         }
         val message = "{\"terminal_uid\":\"${info.clientId}\"}"
-        val topics = info.publishTopics
+        val topics = info.subscribeTopics
         val qos = 2
         val retained = false
         if (message != "" || !topics.isNullOrEmpty()) {
@@ -138,7 +135,7 @@ class MqttManager private constructor(private val context: Context, builder: Bui
         override fun onSuccess(arg0: IMqttToken) {
             Log.i(tag, "连接成功:$info")
             try {
-                info.publishTopics.forEach { topic ->
+                info.subscribeTopics.forEach { topic ->
                     mqttAndroidClient?.subscribe(topic, 2) //订阅主题，参数：主题、服务质量
                 }
             } catch (e: MqttException) {
@@ -182,6 +179,77 @@ class MqttManager private constructor(private val context: Context, builder: Bui
         connectMqtt()
     }
 
+    fun publish(topic: String? = null, message: MqttMessage): IMqttDeliveryToken? {
+        val publishTopic = checkPublishTopic(topic)
+        try {
+            return mqttAndroidClient?.publish(publishTopic, message)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
+
+    private fun checkPublishTopic(topic: String?): String? {
+        val publishTopic = topic ?: info.publishTopic
+        Log.d(TAG, "publishTopic:$publishTopic")
+        return publishTopic
+    }
+
+    fun publish(
+        topic: String? = null,
+        message: MqttMessage,
+        userContext: Any,
+        callback: IMqttActionListener
+    ): IMqttDeliveryToken? {
+        val publishTopic = checkPublishTopic(topic)
+        try {
+            return mqttAndroidClient?.publish(publishTopic, message, userContext, callback)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
+
+    fun publish(
+        topic: String? = null,
+        payload: ByteArray?,
+        qos: Int,
+        retained: Boolean
+    ): IMqttDeliveryToken? {
+        val publishTopic = checkPublishTopic(topic)
+        try {
+            return mqttAndroidClient?.publish(publishTopic, payload, qos, retained)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
+
+    fun publish(
+        topic: String? = null,
+        payload: ByteArray?,
+        qos: Int,
+        retained: Boolean,
+        userContext: Any,
+        callback: IMqttActionListener
+    ): IMqttDeliveryToken? {
+        val publishTopic = checkPublishTopic(topic)
+        try {
+            return mqttAndroidClient?.publish(
+                publishTopic,
+                payload,
+                qos,
+                retained,
+                userContext,
+                callback
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
+
+
     fun close() {
         try {
             mqttAndroidClient?.disconnect()//断开连接
@@ -196,7 +264,8 @@ class MqttManager private constructor(private val context: Context, builder: Bui
 data class MqttConfig(
     val serverUri: String,
     val clientId: String,
-    val publishTopics: List<String>,
+    val subscribeTopics: List<String>,
+    val publishTopic: String? = null,
     val userName: String,
     val password: String
 
