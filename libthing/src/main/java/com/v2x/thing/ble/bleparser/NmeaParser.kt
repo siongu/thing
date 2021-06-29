@@ -1,13 +1,8 @@
 package com.v2x.thing.ble.bleparser
 
 import android.util.Log
-import com.v2x.thing.ble.bleservice.BleService
-import com.v2x.thing.ble.bleservice.ServiceType
-import com.v2x.thing.headingBetweenPoints
-import com.v2x.thing.model.GGAInfo
-import com.v2x.thing.model.LatLng
-import com.v2x.thing.model.SpeedInfo
-import com.v2x.thing.speedBetweenPoints
+import com.v2x.thing.ble.bleservice.*
+import com.v2x.thing.model.NmeaInfo
 import net.sf.marineapi.nmea.event.SentenceEvent
 import net.sf.marineapi.nmea.event.SentenceListener
 import net.sf.marineapi.nmea.io.SentenceReader
@@ -19,12 +14,12 @@ import java.util.concurrent.Executors
 import java.util.regex.Matcher
 
 
-class GpsNmeaParser private constructor(private val type: ServiceType) : Parser {
+class NmeaParser private constructor(serviceType: ServiceType, dispatcher: Dispatcher?) :
+    AbstractParser(serviceType, dispatcher) {
 
     companion object {
-        const val TAG = "GpsNmeaParser"
-        fun newInstance(type: ServiceType): GpsNmeaParser {
-            return GpsNmeaParser(type)
+        fun getInstance(type: ServiceType, dispatcher: Dispatcher? = null): NmeaParser {
+            return NmeaParser(type, dispatcher)
         }
     }
 
@@ -52,17 +47,18 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
             Log.d(TAG, "readingStopped")
         }
 
-        private var ggaInfo: GGAInfo? = null
-        private var lastGGAInfo: GGAInfo? = null
+        private var ggaInfo: NmeaInfo? = null
+        private var lastGGAInfo: NmeaInfo? = null
         private var frameAvailable = false
         override fun sentenceRead(event: SentenceEvent) {
-            println("parse for device type \"${type.desc}\"")
-            when (type) {
-                ServiceType.CP200_SINGLE_OUTPUT -> singleData(event)
-                ServiceType.TK1306,
-                ServiceType.CP200_DUAL_OUTPUT -> dualData(event)
+            Log.d(TAG, "sentenceRead: ${event.sentence}")
+            Log.d(TAG, "parse for device type: ${serviceType.desc}")
+            when (getType()) {
+                CP200Single -> singleData(event)
+                TK1306,
+                CP200Dual -> dualData(event)
                 else -> {
-                    Log.d(TAG, "sentenceRead: no available parser for type:${type.desc}")
+                    Log.d(TAG, "sentenceRead: no available parser for type:${serviceType.desc}")
                 }
             }
         }
@@ -73,7 +69,7 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
                 if ("GGA" == s.sentenceId) {
                     val gga = s as GGASentence
                     Log.d(TAG, "singleData GGA: $gga")
-                    ggaInfo = GGAInfo()
+                    ggaInfo = NmeaInfo()
                     ggaInfo?.apply {
                         latitude = gga.position.latitude
                         longitude = gga.position.longitude
@@ -93,7 +89,7 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
 //                            )
 //                            speed = if (sp < 0) last.speed else sp
                         }
-                        dispatchGGA(this)
+                        dispatch(this)
                         lastGGAInfo = this
                     }
                 }
@@ -110,7 +106,7 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
                     Log.d(TAG, "dualData RMC: $rmc")
                     if (!frameAvailable) {
                         frameAvailable = true
-                        ggaInfo = GGAInfo()
+                        ggaInfo = NmeaInfo()
                         ggaInfo?.apply {
                             rmc.position?.let { pos ->
                                 latitude = pos.latitude
@@ -124,7 +120,7 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
                         ggaInfo?.apply {
                             speed = rmc.speed
                             course = rmc.course
-                            dispatchGGA(this)
+                            dispatch(this)
                             lastGGAInfo = this
                         }
                     }
@@ -133,13 +129,13 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
                     Log.d(TAG, "dualData GGA: $gga")
                     if (!frameAvailable) {
                         frameAvailable = true
-                        ggaInfo = GGAInfo()
+                        ggaInfo = NmeaInfo()
                         setGGAInfo(gga)
                     } else {
                         frameAvailable = false
                         setGGAInfo(gga)
                         ggaInfo?.apply {
-                            dispatchGGA(this)
+                            dispatch(this)
                             lastGGAInfo = this
                         }
                     }
@@ -175,16 +171,21 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
 
     }
 
-    private fun dispatchGGA(ggaInfo: GGAInfo) {
-        Log.d(TAG, "dispatchGGA ggaInfo:${ggaInfo}")
-        BleService.INSTANCE.getDispatchers(type).forEach {
-            it.dispatchGGA(ggaInfo)
+    private fun dispatch(nmeaInfo: NmeaInfo) {
+        Log.d(TAG, "dispatchNmea:${nmeaInfo}")
+        if (serviceType is SpecifiedType)
+            BleService.INSTANCE.getDispatcher(serviceType).let {
+                if (it is NmeaDispatcher) it.dispatchNmea(nmeaInfo)
+            }
+        if (dispatcher is NmeaDispatcher) {
+            dispatcher.dispatchNmea(nmeaInfo)
         }
     }
 
 
     override fun parseData(data: ByteArray) {
         executors.execute {
+            super.parseData(data)
             task(data)
         }
     }
@@ -200,7 +201,7 @@ class GpsNmeaParser private constructor(private val type: ServiceType) : Parser 
         }
         Log.d(TAG, "nmea:$sb")
         var rd = data
-        rd = nmeaFilter(data)
+        rd = nmeaFilter(rd)
         pipOut.write(rd)
     }
 

@@ -1,22 +1,22 @@
 package com.v2x.thing.ble.bleparser
 
 import android.util.Log
-import com.v2x.thing.ble.bleservice.BleService
-import com.v2x.thing.ble.bleservice.ServiceType
+import com.cmcc.v2x2019.cmri.newhandler.*
+import com.v2x.thing.ble.bleservice.*
 import com.v2x.thing.ble.execute
 import java.io.ByteArrayOutputStream
 import java.util.*
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 
-class GxxStandParser private constructor() : Parser {
+class V2XStandParser private constructor(serviceType: ServiceType, dispatcher: V2XDispatcher?) :
+    AbstractParser(serviceType, dispatcher) {
     companion object {
-        fun newInstance(): GxxStandParser {
-            return GxxStandParser()
+        fun getInstance(type: ServiceType, dispatcher: V2XDispatcher? = null): V2XStandParser {
+            return V2XStandParser(type, dispatcher)
         }
     }
 
-    private val TAG = GxxStandParser::class.java.simpleName
     private val byteBlockingQueue: BlockingQueue<ByteArray> = LinkedBlockingQueue()
     private val pairBlockingQueue: BlockingQueue<Pair<Int, ByteArray>> = LinkedBlockingQueue()
     private var isStarted = false
@@ -90,16 +90,16 @@ class GxxStandParser private constructor() : Parser {
                     if (baos == null) continue // invalid data
                     sum++
                     if (sum != index) { // may be packet loss
-                        baos?.close()
+                        baos.close()
                         baos = null
                         continue
                     }
                     val validData = ByteArray(size)
                     System.arraycopy(data, startPos, validData, 0, size)
-                    baos?.write(validData)
+                    baos.write(validData)
                     if (index == total) {// data end
-                        baos?.flush()
-                        baos?.toByteArray()?.let { bytes ->
+                        baos.flush()
+                        baos.toByteArray().let { bytes ->
                             baos?.close()
                             baos = null
                             dispatchResult(Pair(type, bytes))
@@ -131,14 +131,34 @@ class GxxStandParser private constructor() : Parser {
                     val pair = pairBlockingQueue.take()
                     val type = convert(pair.first)
                     println("data type = ${type.desc}")
-                    val dispatchers = BleService.INSTANCE.getDispatchers(ServiceType.GXX)
+                    val dispatcher = BleService.INSTANCE.getDispatcher(GXX) as V2XDispatcher?
                     when (type) {
-//                        DataType.BSM -> dispatchers.forEach { it.dispatchBsm(BsmHandler.handleBsmDecode(pair.second)) }
-//                        DataType.MAP -> dispatchers.forEach { it.dispatchMap(MapHandler.handleMapDecode(pair.second)) }
-//                        DataType.RSI -> dispatchers.forEach { it.dispatchRsi(RsiHandler.handleRsiDecode(pair.second)) }
-//                        DataType.RSM -> dispatchers.forEach { it.dispatchRsm(RsmHandler.handleRsmDecode(pair.second)) }
-//                        DataType.SPAT -> dispatchers.forEach { it.dispatchSpat(SpatHandler.handleSpatDecode(pair.second)) }
-                        DataType.OTHER -> dispatchers.forEach {
+                        DataType.BSM -> dispatcher?.dispatchBsm(
+                            BsmHandler.handleBsmDecode(
+                                pair.second
+                            )
+                        )
+                        DataType.MAP -> dispatcher?.dispatchMap(
+                            MapHandler.handleMapDecode(
+                                pair.second
+                            )
+                        )
+                        DataType.RSI -> dispatcher?.dispatchRsi(
+                            RsiHandler.handleRsiDecode(
+                                pair.second
+                            )
+                        )
+                        DataType.RSM -> dispatcher?.dispatchRsm(
+                            RsmHandler.handleRsmDecode(
+                                pair.second
+                            )
+                        )
+                        DataType.SPAT -> dispatcher?.dispatchSpat(
+                            SpatHandler.handleSpatDecode(
+                                pair.second
+                            )
+                        )
+                        DataType.OTHER -> dispatcher?.let {
                             val result = String(pair.second, Charsets.UTF_8)
                             Log.d(TAG, "received ble data：$result")
                             it.dispatch(result)

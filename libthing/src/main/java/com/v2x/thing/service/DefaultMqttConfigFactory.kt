@@ -10,11 +10,11 @@ class DefaultMqttConfigFactory : MqttConfigFactory {
         return MqttConfig(
             serverUri = serverUri,
             clientId = clientId,
-            subscribeTopics = arrayListOf(
+            subscribeTopics = arrayOf(
                 "gps-src-data/cp200"
             ),
             userName = "admin",
-            password = "password"
+            password = "admin"
         )
     }
 }

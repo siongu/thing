@@ -135,8 +135,9 @@ class MqttManager private constructor(private val context: Context, builder: Bui
         override fun onSuccess(arg0: IMqttToken) {
             Log.i(tag, "连接成功:$info")
             try {
-                info.subscribeTopics.forEach { topic ->
-                    mqttAndroidClient?.subscribe(topic, 2) //订阅主题，参数：主题、服务质量
+                info.subscribeTopics.let { topics ->
+                    val qoss = IntArray(topics.size) { 2 }
+                    mqttAndroidClient?.subscribe(topics, qoss) //订阅主题，参数：主题、服务质量
                 }
             } catch (e: MqttException) {
                 e.printStackTrace()
@@ -264,7 +265,7 @@ class MqttManager private constructor(private val context: Context, builder: Bui
 data class MqttConfig(
     val serverUri: String,
     val clientId: String,
-    val subscribeTopics: List<String>,
+    val subscribeTopics: Array<String>,
     val publishTopic: String? = null,
     val userName: String,
     val password: String

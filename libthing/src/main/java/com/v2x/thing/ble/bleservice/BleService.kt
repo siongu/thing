@@ -14,9 +14,7 @@ import com.clj.fastble.exception.BleException
 import com.clj.fastble.scan.BleScanRuleConfig
 import com.v2x.thing.ble.OnNotifyListener
 import com.v2x.thing.ble.OnWriteMessageListener
-import com.v2x.thing.ble.bleparser.GpsNmeaParser
-import com.v2x.thing.ble.bleparser.GxxStandParser
-import com.v2x.thing.ble.bleparser.Parser
+import com.v2x.thing.ble.bleparser.*
 import com.v2x.thing.ble.splitWriter.SplitWriter
 import java.util.*
 import kotlin.collections.ArrayList
@@ -32,44 +30,51 @@ class BleService private constructor() : IDispatcherHandler {
         CONNECTED(0), DISCONNECTED(-1), NOTIFY_OPEN(1), NOTIFY_STOP(-2)
     }
 
-    private var tempType = ServiceType.CP200_SINGLE_OUTPUT
-    private val dispatchers = mutableMapOf<String, MutableSet<Dispatcher>>()
+    private val dispatchers = mutableMapOf<SpecifiedType, Dispatcher>()
     private var onConnectListener: BleGattCallback? = null
     private var notifyListener: OnNotifyListener? = null
     private val connectedDevices: MutableList<DeviceWrapper> = mutableListOf()
-    private val bleParsers = mutableMapOf<String, Parser>()
+    private val bleParsers = mutableListOf<Parser>()
 
     init {
-        bleParsers[ServiceType.GXX.name] = GxxStandParser.newInstance()
-        bleParsers[ServiceType.TK1306.name] = GpsNmeaParser.newInstance(ServiceType.TK1306)
-        bleParsers[ServiceType.CP200_SINGLE_OUTPUT.name] =
-            GpsNmeaParser.newInstance(ServiceType.CP200_SINGLE_OUTPUT)
-        bleParsers[ServiceType.CP200_DUAL_OUTPUT.name] =
-            GpsNmeaParser.newInstance(ServiceType.CP200_DUAL_OUTPUT)
-        addConnectedDeviceWrapper(
-            DeviceWrapper(
-                null,
-                bleParsers[ServiceType.GXX.name],
-                UUID_SERVICE_GXX.toString(),
-                UUID_NOTIFY_GXX.toString()
-            )
-        )
-        addConnectedDeviceWrapper(
-            DeviceWrapper(
-                null,
-                bleParsers[ServiceType.TK1306.name],
-                UUID_SERVICE_MENG_XIN_TK1306.toString(),
-                UUID_NOTIFY_MENG_XIN_TK1306.toString()
-            )
-        )
-        addConnectedDeviceWrapper(
-            DeviceWrapper(
-                null,
-                bleParsers[ServiceType.CP200_SINGLE_OUTPUT.name],
-                UUID_SERVICE_MENG_XIN_CP200.toString(),
-                UUID_NOTIFY_MENG_XIN_CP200.toString()
-            )
-        )
+        registerParser(V2XStandParser.getInstance(GXX))
+        registerParser(NmeaParser.getInstance(TK1306))
+        registerParser(NmeaParser.getInstance(CP200Dual))
+        registerParser(BasicParser.getInstance(UNKNOWN))
+//        bleParsers[ServiceType.GXX.name] = GxxStandParser.newInstance()
+//        bleParsers[ServiceType.TK1306.name] = GpsNmeaParser.newInstance(ServiceType.TK1306)
+//        bleParsers[ServiceType.CP200_SINGLE_OUTPUT.name] =
+//            GpsNmeaParser.newInstance(ServiceType.CP200_SINGLE_OUTPUT)
+//        bleParsers[ServiceType.CP200_DUAL_OUTPUT.name] =
+//            GpsNmeaParser.newInstance(ServiceType.CP200_DUAL_OUTPUT)
+//        addConnectedDeviceWrapper(
+//            DeviceWrapper(
+//                null,
+//                bleParsers[ServiceType.GXX.name],
+//                UUID_SERVICE_GXX.toString(),
+//                UUID_NOTIFY_GXX.toString()
+//            )
+//        )
+//        addConnectedDeviceWrapper(
+//            DeviceWrapper(
+//                null,
+//                bleParsers[ServiceType.TK1306.name],
+//                UUID_SERVICE_MENG_XIN_TK1306.toString(),
+//                UUID_NOTIFY_MENG_XIN_TK1306.toString()
+//            )
+//        )
+//        addConnectedDeviceWrapper(
+//            DeviceWrapper(
+//                null,
+//                bleParsers[ServiceType.CP200_SINGLE_OUTPUT.name],
+//                UUID_SERVICE_MENG_XIN_CP200.toString(),
+//                UUID_NOTIFY_MENG_XIN_CP200.toString()
+//            )
+//        )
+    }
+
+    private fun registerParser(parser: Parser) {
+        bleParsers.add(parser)
     }
 
     var state = State.DISCONNECTED
@@ -113,35 +118,32 @@ class BleService private constructor() : IDispatcherHandler {
         connectedDevices.add(deviceWrapper)
     }
 
+    fun removeFromConnectedDevices(device: BleDevice?) {
+        connectedDevices.removeAll { it.bleDevice?.mac == device?.mac }
+    }
+
+    fun removeFromConnectedDevices(device: DeviceWrapper?) {
+        connectedDevices.removeAll { it.bleDevice?.mac == device?.bleDevice?.mac }
+    }
+
     fun getConnectedDevices(): List<DeviceWrapper> {
         return connectedDevices
     }
 
-    fun getDispatchers(type: ServiceType): List<Dispatcher> {
-        return dispatchers[type.name].run {
-            if (this == null) ArrayList() else ArrayList(this)
-        }
+    fun getDispatcher(type: SpecifiedType): Dispatcher? {
+        return dispatchers[type]
     }
 
-    override fun register(type: ServiceType, dispatcher: Dispatcher) {
-        var dis = dispatchers[type.name]
-        if (dis == null) {
-            dis = mutableSetOf()
-            dispatchers[type.name] = dis
-        }
-        dis.add(dispatcher)
+    override fun register(type: SpecifiedType, dispatcher: Dispatcher) {
+        dispatchers[type] = dispatcher
     }
 
-    override fun unRegister(type: ServiceType, dispatcher: Dispatcher) {
-        dispatchers[type.name]?.remove(dispatcher)
+    override fun unRegister(type: SpecifiedType, dispatcher: Dispatcher) {
+        dispatchers.remove(type)
     }
 
     override fun clean() {
         dispatchers.clear()
-    }
-
-    fun serviceType(type: ServiceType) {
-        tempType = type
     }
 
     fun isConnectToDevice(bleDevice: BleDevice?): Boolean {
@@ -306,36 +308,33 @@ class BleService private constructor() : IDispatcherHandler {
         listener: OnNotifyListener? = null
     ) {
         if (!BleManager.getInstance().isConnected(bleDevice)) {
-            println("设备未连接上")
+            Log.d(TAG, "openNotify: 设备未连接上")
             listener?.onNotifyFailure(Exception("设备未连接上"))
             return
         }
-        if (state == State.NOTIFY_OPEN) {
-            println("通知已开启")
-            listener?.onNotifySuccess()
-            return
-        }
-        findDeviceWrapper(uuidService).apply {
-            this.bleDevice = bleDevice
-            this.uuidService = uuidService
-            this.uuidNotify = uuidNotify
-            this.parser = bleParsers[uuidService]
-        }
+//        if (state == State.NOTIFY_OPEN) {
+//            Log.d(TAG, "openNotify: 通知已开启")
+//            listener?.onNotifySuccess()
+//            return
+//        }
         BleManager.getInstance()
             .notify(bleDevice, uuidService, uuidNotify, object : BleNotifyCallback() {
-                val parser = getParser(tempType.name)
+                val deviceWrapper = findDeviceWrapper(bleDevice)
+                val parser = getParser(uuidService, uuidNotify)
                 override fun onCharacteristicChanged(data: ByteArray?) {
                     data?.run {
-                        parser?.parseData(data)
+                        parser.parseData(data)
                     }
                 }
 
                 override fun onNotifyFailure(e: BleException?) {
+                    Log.d(TAG, "onNotifyFailure: ${deviceWrapper.toString()},error:${e.toString()}")
                     notifyListener?.onNotifyFailure(Exception(e?.description))
                     listener?.onNotifyFailure(Exception(e?.description))
                 }
 
                 override fun onNotifySuccess() {
+                    Log.d(TAG, "onNotifySuccess: ${deviceWrapper.toString()}")
                     state = State.NOTIFY_OPEN
                     notifyListener?.onNotifySuccess()
                     listener?.onNotifySuccess()
@@ -361,39 +360,72 @@ class BleService private constructor() : IDispatcherHandler {
             BleManager.getInstance().getBluetoothGattServices(bleDevice)
         var characteristic: BluetoothGattCharacteristic? = null
         var deviceWrapper: DeviceWrapper? = null
+        // finding specified notify to open it
         gattServices?.forEach { service ->
             val uuidService = service.uuid.toString()
-            if (contains(uuidService)) {
-                deviceWrapper = findDeviceWrapper(uuidService).apply {
-                    this.bleDevice = bleDevice
+            val serviceType = findSpecifiedServiceType(uuidService)
+            if (serviceType != null) {
+                deviceWrapper = findDeviceWrapper(bleDevice)?.apply {
+                    this.uuidService = serviceType.uuidService
                 }
-                val uuidNotify = deviceWrapper?.uuidNotify
+                val uuidNotify = serviceType.uuidNotify
                 val characteristics: MutableList<BluetoothGattCharacteristic>? =
                     service.characteristics
                 characteristics?.forEach { chr ->
-                    if (chr.uuid.toString() == uuidNotify || (chr.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
+                    if (chr.uuid.toString() == uuidNotify /*|| (chr.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0*/) {
                         characteristic = chr
-                        println("find support notify characteristic UUID：${chr.uuid}")
+                        deviceWrapper?.uuidNotify = uuidNotify
+                        println("found specified notify characteristic UUID：${chr.uuid}")
                         return@forEach
                     }
                 }
                 if (characteristic != null) {
-                    deviceWrapper?.uuidNotify = characteristic!!.uuid.toString()
+                    openNotify(
+                        bleDevice,
+                        uuidService,
+                        uuidNotify,
+                        listener = onNotifyListener
+                    )
                     return@forEach
                 }
             }
         }
         if (characteristic != null) {
-            openNotify(
-                bleDevice,
-                deviceWrapper!!.uuidService,
-                deviceWrapper!!.uuidNotify,
-                listener = onNotifyListener
-            )
+            Log.d(TAG, "specified device info: ${deviceWrapper.toString()}")
         } else {
-            println("not find support notification characteristic.")
+            // finding available notify to open it
+            gattServices?.forEach { service ->
+                val uuidService = service.uuid.toString()
+                deviceWrapper = findDeviceWrapper(bleDevice)?.apply {
+                    this.uuidService = uuidService
+                }
+                val characteristics: MutableList<BluetoothGattCharacteristic>? =
+                    service.characteristics
+                characteristics?.forEach { chr ->
+                    if ((chr.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
+                        characteristic = chr
+                        deviceWrapper?.uuidNotify = chr.uuid.toString()
+                        println("found available notify characteristic UUID：${chr.uuid}")
+                        return@forEach
+                    }
+                }
+                if (characteristic != null) {
+                    var uuidNotify = characteristic!!.uuid.toString()
+                    openNotify(
+                        bleDevice,
+                        uuidService,
+                        uuidNotify,
+                        listener = onNotifyListener
+                    )
+                    return@forEach
+                }
+            }
+            if (characteristic != null) {
+                Log.d(TAG, "available device info: ${deviceWrapper.toString()}")
+            } else {
+                println("not found available notification characteristic.")
+            }
         }
-        Log.d(TAG, "${deviceWrapper.toString()}")
     }
 
     fun stopNotify(bleDevice: BleDevice?): Boolean {
@@ -418,12 +450,35 @@ class BleService private constructor() : IDispatcherHandler {
         }
     }
 
-    private fun getParser(sid: String?): Parser? {
-        return bleParsers[sid]
+    private fun getParser(uuidService: String, uuidNotify: String): Parser {
+        val serviceType = GenericType.getInstance(uuidService, uuidNotify)
+        val parser =
+            bleParsers.find { it.getType().uuidService == uuidService && it.getType().uuidNotify == uuidNotify }
+                ?: BasicParser.getInstance(serviceType).apply {
+                    bleParsers.add(this)
+                }
+        Log.d(
+            TAG,
+            "getParser type: ${parser?.getType()?.desc},[uuidService:$uuidService,uuidNotify:$uuidNotify]"
+        )
+        return parser
     }
 
-    private fun contains(sid: String?): Boolean {
-        return connectedDevices.find { it.uuidService == sid } != null
+    private fun getParserByType(type: ServiceType): Parser? {
+        return bleParsers.find { it.getType().uuidService == type.uuidService && it.getType().uuidNotify == type.uuidNotify }
+    }
+
+    private fun contains(sid: String?, nid: String?): Boolean {
+        return connectedDevices.find { it.uuidService == sid && it.uuidNotify == nid } != null
+    }
+
+    private fun findSpecifiedServiceType(uuidService: String?): ServiceType? {
+        val type = SpecifiedType.types.find { it.uuidService == uuidService }
+        Log.d(
+            TAG,
+            "findSpecifiedServiceType:[uuidService:${type?.uuidService},uuidNotify:${type?.uuidNotify}]"
+        )
+        return type
     }
 
 }

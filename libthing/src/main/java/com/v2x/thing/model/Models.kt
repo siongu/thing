@@ -36,7 +36,7 @@ data class AuthInfo(
     val State: Int,
 )
 
-data class GGAInfo(
+data class NmeaInfo(
     var latitude: Double = 0.0,
     var longitude: Double = 0.0,
     var altitude: Double = 0.0,

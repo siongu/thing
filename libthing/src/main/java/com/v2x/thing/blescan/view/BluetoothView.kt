@@ -6,9 +6,6 @@ import com.v2x.thing.base.BaseView
 import com.v2x.thing.ble.OnNotifyListener
 
 interface BluetoothView : BaseView {
-    fun connectDevice(
-        device: BleDevice,
-        connectListener: BleGattCallback? = null,
-        onNotifyListener: OnNotifyListener? = null
-    )
+    fun stopScan()
+    fun showDialog(msg: String)
 }
