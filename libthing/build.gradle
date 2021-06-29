@@ -3,6 +3,7 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-kapt'
     id 'maven-publish'
+    id 'maven'
 }
 group ='com.github.siongu'
 version = '1.0.4'
@@ -135,6 +136,29 @@ afterEvaluate {
                 groupId = 'com.github.siongu'
                 artifactId = 'v2x.thing'
                 version = '1.0.4'
+            }
+        }
+    }
+}
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "file:///C:\\localmaven")
+            pom.project {
+                name 'v2x'
+                artifactId 'thing'
+                groupId 'com.v2x'
+                version '1.0.8.1'
+                packaging 'aar'
+                description 'v2x std lib'
+
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
             }
         }
     }

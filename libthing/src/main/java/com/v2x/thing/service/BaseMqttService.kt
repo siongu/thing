@@ -168,7 +168,7 @@ abstract class BaseMqttService : Service() {
             val msg = String(message.payload)
             Log.i(tag, "收到消息：topic:$topic, msg: $msg")
             dispatchers.forEach {
-                it.dispatch(msg)
+                it.dispatchMessage(topic, msg)
             }
         }
 
