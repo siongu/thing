@@ -6,6 +6,7 @@ import android.net.ConnectivityManager
 import android.util.Log
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
+import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
@@ -15,14 +16,14 @@ class MqttManager private constructor(private val context: Context, builder: Bui
     private var dispatchers: List<MqttDispatcher>
     private var mqttAndroidClient: MqttAndroidClient? = null
     private var mMqttConnectOptions: MqttConnectOptions? = null
+    private val qos = 0
     private lateinit var info: MqttConfig
     private val tag = this::class.simpleName
-    private val scheduledPool = ScheduledThreadPoolExecutor(1)
+    private val scheduledPool = Executors.newScheduledThreadPool(1)
 
     init {
         configFactory = builder.configFactory
         dispatchers = builder.dispatchers
-        init()
     }
 
     class Builder(private val context: Context) {
@@ -67,6 +68,7 @@ class MqttManager private constructor(private val context: Context, builder: Bui
      */
     private fun init() {
         info = configFactory.create()
+        Log.d(TAG, "info: $info")
         mqttAndroidClient = MqttAndroidClient(context, info.serverUri, info.clientId)
         mqttAndroidClient?.setCallback(mqttCallback) //设置监听订阅消息的回调
         mMqttConnectOptions = MqttConnectOptions().apply {
@@ -78,7 +80,6 @@ class MqttManager private constructor(private val context: Context, builder: Bui
         }
         val message = "{\"terminal_uid\":\"${info.clientId}\"}"
         val topics = info.subscribeTopics
-        val qos = 2
         val retained = false
         if (message != "" || !topics.isNullOrEmpty()) {
             // 最后的遗嘱
@@ -136,7 +137,7 @@ class MqttManager private constructor(private val context: Context, builder: Bui
             Log.i(tag, "连接成功:$info")
             try {
                 info.subscribeTopics.let { topics ->
-                    val qoss = IntArray(topics.size) { 2 }
+                    val qoss = IntArray(topics.size) { qos }
                     mqttAndroidClient?.subscribe(topics, qoss) //订阅主题，参数：主题、服务质量
                 }
             } catch (e: MqttException) {
@@ -156,7 +157,7 @@ class MqttManager private constructor(private val context: Context, builder: Bui
         @Throws(Exception::class)
         override fun messageArrived(topic: String, message: MqttMessage) {
             val msg = String(message.payload)
-            Log.i(tag, "收到消息：topic:$topic, msg: $msg")
+            Log.d(tag, "收到消息：topic:$topic, msg: $msg")
             dispatchers.forEach { dispatcher ->
                 val filterTopics = dispatcher.filterTopics()
                 if (filterTopics != null) {
@@ -177,6 +178,7 @@ class MqttManager private constructor(private val context: Context, builder: Bui
     }
 
     fun connect() {
+        init()
         connectMqtt()
     }
 
