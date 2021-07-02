@@ -10,8 +10,7 @@ import android.os.Message
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.v2x.thing.model.LatLng
-import com.v2x.thing.model.SpeedInfo
+import com.v2x.thing.model.Point
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -105,7 +104,7 @@ inline fun <reified T> getAssetAsData(context: Context, fileName: String): T {
     return Gson().fromJson(stringBuilder.toString(), T::class.java)
 }
 
-fun headingBetweenPoints(start: LatLng, end: LatLng): Double {
+fun headingBetweenPoints(start: Point, end: Point): Double {
     val y: Double = end.latitude - start.latitude
     val x: Double = end.longitude - start.longitude
     var angle = PI / 2 - atan2(y, x)
@@ -115,8 +114,8 @@ fun headingBetweenPoints(start: LatLng, end: LatLng): Double {
 }
 
 fun speedBetweenPoints(
-    start: LatLng,
-    end: LatLng,
+    start: Point,
+    end: Point,
     durationInMills: Long,
 ): Double {
     val startLatitude = start.latitude

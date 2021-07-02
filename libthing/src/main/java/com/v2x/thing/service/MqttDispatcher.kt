@@ -4,7 +4,7 @@ interface MqttDispatcher {
     fun dispatchMqttMessage(topic: String, msg: String)
 
     /**
-     * topics for message
+     *   filter message for topics
      * null for all
      */
     fun filterTopics(): List<String>? {

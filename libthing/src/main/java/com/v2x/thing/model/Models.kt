@@ -48,7 +48,7 @@ data class NmeaInfo(
     var timestamp: Long = System.currentTimeMillis()
 )
 
-data class LatLng(
+data class Point(
     val latitude: Double,
     val longitude: Double,
     val altitude: Double = 0.0
