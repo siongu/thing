@@ -26,9 +26,9 @@ import org.greenrobot.eventbus.ThreadMode
 
 class BluetoothActivity : V2XBaseActivity(), BluetoothView {
     companion object {
-        val REQUEST_CODE_OPEN_GPS = 0x00011
-        val REQUEST_CODE_OPEN_BLUETOOTH = 0x00012
-        val REQUEST_CODE_ENABLE_BLUETOOTH = 0x00013
+        const val REQUEST_CODE_OPEN_GPS = 0x00011
+        const val REQUEST_CODE_OPEN_BLUETOOTH = 0x00012
+        const val REQUEST_CODE_ENABLE_BLUETOOTH = 0x00013
     }
 
     private lateinit var adapter: BleDevicesAdapter

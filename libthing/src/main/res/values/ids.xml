@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--bottom tab id-->
+    <item name="tab" type="id" />
+    <item name="indicator" type="id" />
+    <item name="toast" type="id" />
+</resources>

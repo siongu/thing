@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="BottomTabView">
+        <attr name="bottom_labels" format="reference" />
+        <attr name="tab_res_ids" format="reference" />
+        <attr name="tab_select_background" format="reference|color" />
+        <attr name="tab_unSelect_background" format="reference|color" />
+        <attr name="tab_indicator_drawable" format="reference|color" />
+        <attr name="tab_textColor_selector" format="reference" />
+        <attr name="tab_text_size" format="dimension" />
+        <attr name="tab_horizontal_divider" format="reference|color" />
+        <attr name="tab_divider_width" format="dimension" />
+        <attr name="tab_drawable_padding" format="dimension" />
+        <attr name="tab_indicator_margin_top" format="dimension" />
+        <attr name="tab_indicator_margin_bottom" format="dimension" />
+        <attr name="tab_indicator_margin_left" format="dimension" />
+        <attr name="tab_indicator_margin_rigth" format="dimension" />
+        <attr name="tab_count" format="integer" />
+    </declare-styleable>
+    <declare-styleable name="RoundedImageView">
+        <attr name="corner_radius" format="dimension" />
+        <attr name="border_width" format="dimension" />
+        <attr name="border_color" format="color" />
+        <attr name="mutate_background" format="boolean" />
+        <attr name="oval" format="boolean" />
+        <attr name="android:scaleType" />
+    </declare-styleable>
+    <declare-styleable name="VerificationCodeView">
+        <!-- 验证码文本 -->
+        <attr name="verificationText" format="string" />
+        <!-- 设置验证码文本的颜色 -->
+        <attr name="textColor" format="color" />
+        <!-- 设置验证码文本尺寸 -->
+        <attr name="textSize" format="dimension" />
+        <!-- 设置验证码是否有下划线 -->
+        <attr name="isUnderLine" format="boolean" />
+        <!-- 验证码字体是否为粗体-->
+        <attr name="isTextBold" format="boolean" />
+        <!-- 设置文本的倾斜度，默认为 0 ,正数左斜，负数右斜-->
+        <attr name="textSkewX" format="float" />
+        <!-- 设置验证码字体风格，暂时先不要使用，后续完善 -->
+        <attr name="typeFace" format="integer" />
+        <!-- 设置验证码文字宽度-->
+        <attr name="textStrokeWidth" format="float" />
+        <!-- 是否显示干扰线条,默认为 true -->
+        <attr name="isShowInterferenceLines" format="boolean" />
+        <!-- 设置干扰线条的数量，默认 10 条 -->
+        <attr name="interferenceLinesCount" format="integer" />
+        <!-- 设置干扰线条的颜色，如果不设置，默认为随机生成的颜色-->
+        <attr name="interferenceLinesColor" format="color" />
+        <!--设置干扰线条的宽度，默认为 3-->
+        <attr name="interferenceLinesWidth" format="float" />
+        <!-- 设置是否显示干扰圆点，默认为 true -->
+        <attr name="isShowInterferenceCircles" format="boolean" />
+        <!-- 设置干扰圆点的数量，默认 100 个-->
+        <attr name="interferenceCirclesCount" format="integer" />
+        <!-- 设置干扰圆点的颜色，如果不设置，默认为随机生成的颜色-->
+        <attr name="interferenceCirclesColor" format="color" />
+        <!--设置干扰圆点的半径，默认为 5-->
+        <attr name="interferenceCirclesRadius" format="float" />
+        <!-- 设置验证码背景色，默认为灰色-->
+        <attr name="verificationCodeBackground" format="color" />
+    </declare-styleable>
+    <declare-styleable name="TitleView">
+        <attr name="tiv_titleText" format="string" />
+        <attr name="tiv_titleColor" format="color" />
+        <attr name="tiv_titleSize" format="dimension" />
+        <attr name="tiv_titleTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+        <attr name="tiv_leftSrc" format="reference" />
+        <attr name="tiv_leftScaleType" format="enum">
+            <enum name="matrix" value="0" />
+            <!-- Scale the image using {@link android.graphics.Matrix.ScaleToFit#FILL}. -->
+            <enum name="fitXY" value="1" />
+            <!-- Scale the image using {@link android.graphics.Matrix.ScaleToFit#START}. -->
+            <enum name="fitStart" value="2" />
+            <!-- Scale the image using {@link android.graphics.Matrix.ScaleToFit#CENTER}. -->
+            <enum name="fitCenter" value="3" />
+            <!-- Scale the image using {@link android.graphics.Matrix.ScaleToFit#END}. -->
+            <enum name="fitEnd" value="4" />
+            <!-- Center the image in the view, but perform no scaling. -->
+            <enum name="center" value="5" />
+            <!-- Scale the image uniformly (maintain the image's aspect ratio) so both dimensions
+                 (width and height) of the image will be equal to or larger than the corresponding
+                 dimension of the view (minus padding). The image is then centered in the view. -->
+            <enum name="centerCrop" value="6" />
+            <!-- Scale the image uniformly (maintain the image's aspect ratio) so that both
+                 dimensions (width and height) of the image will be equal to or less than the
+                 corresponding dimension of the view (minus padding). The image is then centered in
+                 the view. -->
+            <enum name="centerInside" value="7" />
+
+        </attr>
+        <attr name="tiv_rightText" format="string" />
+        <attr name="tiv_rightColor" format="color" />
+        <attr name="tiv_rightSize" format="dimension" />
+        <attr name="tiv_dividerColor" format="color" />
+        <attr name="tiv_dividerHeight" format="dimension" />
+        <attr name="tiv_dividerMarginLeft" format="dimension" />
+        <attr name="tiv_dividerMarginRight" format="dimension" />
+    </declare-styleable>
+</resources>

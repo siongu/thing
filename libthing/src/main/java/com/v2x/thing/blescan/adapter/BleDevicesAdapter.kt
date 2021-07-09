@@ -2,7 +2,6 @@ package com.v2x.thing.blescan.adapter
 
 import android.bluetooth.BluetoothGatt
 import android.content.Context
-import android.graphics.Color
 import android.graphics.drawable.AnimationDrawable
 import android.os.Build
 import android.support.annotation.RequiresApi
@@ -23,10 +22,8 @@ import com.v2x.thing.ble.OnNotifyListener
 import com.v2x.thing.ble.bleservice.BleService
 import com.v2x.thing.ble.bleservice.DeviceWrapper
 import com.v2x.thing.blescan.view.BluetoothView
-import com.v2x.thing.handleOnUiThread
 import com.v2x.thing.handleOnUiThreadDelay
 import org.jetbrains.anko.find
-import org.jetbrains.anko.textColor
 import java.util.*
 
 class BleDevicesAdapter(
@@ -203,7 +200,7 @@ class BleDevicesAdapter(
     }
 
     fun addItem(item: BleDevice) {
-        var exist = list.find { it.key == item.key }
+        val exist = list.find { it.key == item.key }
         if (exist != null) {
             exist.device = item.device
             exist.rssi = item.rssi
@@ -216,7 +213,7 @@ class BleDevicesAdapter(
 
     fun addItemAndUpdate(item: BleDevice) {
         var index = list.indexOfFirst { it.mac == item.mac }
-        var exist = if (index == -1) null else list[index]
+        val exist = if (index == -1) null else list[index]
         if (exist != null) {
             exist.device = item.device
             exist.rssi = item.rssi
@@ -256,7 +253,7 @@ class BleDevicesAdapter(
     }
 
     private fun startLoading(pb: ImageView) {
-        pb.setBackgroundResource(R.drawable.loading_infenite);
+        pb.setBackgroundResource(R.drawable.loading_infenite)
         val animation: AnimationDrawable? = pb.background as AnimationDrawable?
         animation?.start()
         pb.visibility = View.VISIBLE
@@ -270,19 +267,11 @@ class BleDevicesAdapter(
         pb.visibility = View.GONE
     }
 
-    class ViewHolder : RecyclerView.ViewHolder {
-        var tvName: TextView
-        var tvMac: TextView
-        var tvConnect: TextView
-        var tvNext: TextView
-        var pb: ImageView
-
-        constructor(view: View) : super(view) {
-            tvName = view.find(R.id.tv_name)
-            tvMac = view.find(R.id.tv_mac)
-            tvConnect = view.find(R.id.tv_connect)
-            tvNext = view.find(R.id.tv_next)
-            pb = view.find(R.id.pb_connect)
-        }
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val tvName: TextView = view.find(R.id.tv_name)
+        val tvMac: TextView = view.find(R.id.tv_mac)
+        val tvConnect: TextView = view.find(R.id.tv_connect)
+        val tvNext: TextView = view.find(R.id.tv_next)
+        val pb: ImageView = view.find(R.id.pb_connect)
     }
 }

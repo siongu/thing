@@ -1,4 +1,4 @@
-package com.v2x.thing.service
+package com.v2x.thing.mqtt
 
 interface MqttDispatcher {
     fun dispatchMqttMessage(topic: String, msg: String)

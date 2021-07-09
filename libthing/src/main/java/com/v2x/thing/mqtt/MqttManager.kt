@@ -1,4 +1,4 @@
-package com.v2x.thing.service
+package com.v2x.thing.mqtt
 
 import android.content.Context
 import android.content.Context.CONNECTIVITY_SERVICE
@@ -11,22 +11,21 @@ import java.util.concurrent.TimeUnit
 
 class MqttManager private constructor(
     private val context: Context,
-    private val configFactory: MqttConfigFactory,
+    private val config: MqttConfig,
     private val dispatchers: List<MqttDispatcher>
 ) {
     private val TAG = this.javaClass.simpleName
     private var mqttAndroidClient: MqttAndroidClient? = null
     private var mMqttConnectOptions: MqttConnectOptions? = null
     private val qos = 0
-    private lateinit var config: MqttConfig
     private val tag = this::class.simpleName
     private val scheduledPool = Executors.newScheduledThreadPool(1)
 
     class Builder(private val context: Context) {
-        private lateinit var configFactory: MqttConfigFactory
+        private lateinit var config: MqttConfig
         private val dispatchers = mutableListOf<MqttDispatcher>()
-        fun configure(configFactory: MqttConfigFactory): Builder {
-            this.configFactory = configFactory
+        fun configure(config: MqttConfig): Builder {
+            this.config = config
             return this
         }
 
@@ -46,7 +45,7 @@ class MqttManager private constructor(
         }
 
         fun build(): MqttManager {
-            return MqttManager(context, configFactory, dispatchers)
+            return MqttManager(context, config, dispatchers)
         }
     }
 
@@ -72,7 +71,6 @@ class MqttManager private constructor(
      * 初始化
      */
     private fun init() {
-        config = configFactory.create()
         Log.d(TAG, "info: $config")
         mqttAndroidClient = MqttAndroidClient(context, config.serverUri, config.clientId)
         mqttAndroidClient?.setCallback(mqttCallback) //设置监听订阅消息的回调

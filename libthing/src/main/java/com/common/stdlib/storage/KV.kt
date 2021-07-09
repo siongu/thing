@@ -5,7 +5,7 @@ import com.tencent.mmkv.MMKV
 
 object KV {
     private val kv by lazy { MMKV.defaultMMKV()!! }
-    fun initMMKV(context: Context) {
+    internal fun initMMKV(context: Context) {
         val rootDir = MMKV.initialize(context)
         println("mmkv root: $rootDir")
     }
