@@ -3,8 +3,8 @@ package com.v2x.thing.ble.bleservice
 import java.util.*
 
 // 高新兴蓝牙支架
-val UUID_SERVICE_GXX: UUID = UUID.fromString("D973F2E0-B19E-11E2-9E96-0800200C9A66")
-val UUID_NOTIFY_GXX: UUID = UUID.fromString("11100000-0000-0000-0000-000000000000")
+val UUID_SERVICE_GXX: UUID = UUID.fromString("d973f2e0-b19e-11e2-9e96-0800200c9a66")
+val UUID_NOTIFY_GXX: UUID = UUID.fromString("d973f2e1-b19e-11e2-9e96-0800200c9a66")
 val UUID_WRITE_GXX: UUID = UUID.fromString("12000000-0000-0000-0000-000000000000")
 
 // 梦芯蓝牙手持高精定位设备

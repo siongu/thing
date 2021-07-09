@@ -288,7 +288,7 @@ open class BaseActivity : AppCompatActivity(), CoroutineScope {
         return false
     }
 
-    protected open fun handleBack() {
+    protected open fun handleBack(): Boolean {
         val view = this.currentFocus
         if (view != null) {
             val inputManager =
@@ -303,8 +303,10 @@ open class BaseActivity : AppCompatActivity(), CoroutineScope {
             if (currentFragment != null) {
                 if (!currentFragment.handleBack()) {
                     if (supportFragmentManager.backStackEntryCount > 1) {
-                        popFragment()
+                        return popFragment()
                     }
+                } else {
+                    return true
                 }
             } else {
                 finish()
@@ -312,6 +314,7 @@ open class BaseActivity : AppCompatActivity(), CoroutineScope {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+        return false
     }
 
     protected open fun exit() {

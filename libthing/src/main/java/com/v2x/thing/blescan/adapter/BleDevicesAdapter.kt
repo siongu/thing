@@ -4,12 +4,12 @@ import android.bluetooth.BluetoothGatt
 import android.content.Context
 import android.graphics.drawable.AnimationDrawable
 import android.os.Build
-import android.support.annotation.RequiresApi
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView
 import com.clj.fastble.BleManager
 import com.clj.fastble.callback.BleGattCallback

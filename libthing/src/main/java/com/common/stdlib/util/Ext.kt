@@ -3,7 +3,11 @@ package com.common.stdlib.util
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import java.util.*
 
+fun randomUid(): String {
+    return UUID.randomUUID().toString()
+}
 
 fun putTextIntoClip(context: Context, text: String?) {
     val clipboardManager: ClipboardManager =

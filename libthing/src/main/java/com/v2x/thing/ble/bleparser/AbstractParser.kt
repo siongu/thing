@@ -10,7 +10,7 @@ abstract class AbstractParser(
     protected val dispatcher: Dispatcher? = null
 ) : Parser {
     protected val TAG = this::class.java.simpleName
-    private lateinit var cs: Charset
+    private var cs: Charset = Charset.defaultCharset()
     override fun parseData(data: ByteArray) {
         dispatcher?.dispatchData(data)
         when (cs) {

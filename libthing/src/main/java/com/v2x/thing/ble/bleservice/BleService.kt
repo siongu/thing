@@ -445,7 +445,7 @@ class BleService private constructor() : IDispatcherHandler {
     }
 
     fun findDeviceWrapper(sid: String?): DeviceWrapper {
-        return connectedDevices.find { it.uuidService == sid } ?: DeviceWrapper().apply {
+        return connectedDevices.find { it.uuidService.equals(sid, true) } ?: DeviceWrapper().apply {
             connectedDevices.add(this)
         }
     }
@@ -453,27 +453,37 @@ class BleService private constructor() : IDispatcherHandler {
     private fun getParser(uuidService: String, uuidNotify: String): Parser {
         val serviceType = GenericType.getInstance(uuidService, uuidNotify)
         val parser =
-            bleParsers.find { it.getType().uuidService == uuidService && it.getType().uuidNotify == uuidNotify }
+            bleParsers.find {
+                it.getType().uuidService.equals(uuidService, true) && it.getType().uuidNotify.equals(
+                    uuidNotify,
+                    true
+                )
+            }
                 ?: BasicParser.getInstance(serviceType).apply {
                     bleParsers.add(this)
                 }
         Log.d(
             TAG,
-            "getParser type: ${parser?.getType()?.desc},[uuidService:$uuidService,uuidNotify:$uuidNotify]"
+            "getParser type: ${parser.getType().desc},[uuidService:$uuidService,uuidNotify:$uuidNotify]"
         )
         return parser
     }
 
     private fun getParserByType(type: ServiceType): Parser? {
-        return bleParsers.find { it.getType().uuidService == type.uuidService && it.getType().uuidNotify == type.uuidNotify }
+        return bleParsers.find {
+            it.getType().uuidService.equals(type.uuidService, true) && it.getType().uuidNotify.equals(
+                type.uuidNotify,
+                true
+            )
+        }
     }
 
     private fun contains(sid: String?, nid: String?): Boolean {
-        return connectedDevices.find { it.uuidService == sid && it.uuidNotify == nid } != null
+        return connectedDevices.find { it.uuidService.equals(sid, true) && it.uuidNotify.equals(nid, true) } != null
     }
 
     private fun findSpecifiedServiceType(uuidService: String?): ServiceType? {
-        val type = SpecifiedType.types.find { it.uuidService == uuidService }
+        val type = SpecifiedType.types.find { it.uuidService.equals(uuidService, true) }
         Log.d(
             TAG,
             "findSpecifiedServiceType:[uuidService:${type?.uuidService},uuidNotify:${type?.uuidNotify}]"

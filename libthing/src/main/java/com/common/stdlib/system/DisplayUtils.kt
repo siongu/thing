@@ -113,10 +113,6 @@ fun isNavigationBarShow(context: Context): Boolean {
     } else {
         val menu = ViewConfiguration.get(context).hasPermanentMenuKey()
         val back = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK)
-        if (menu || back) {
-            false
-        } else {
-            true
-        }
+        !(menu || back)
     }
 }

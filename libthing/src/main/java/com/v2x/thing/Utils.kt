@@ -47,6 +47,10 @@ fun handleOnUiThreadDelay(task: Runnable, delayInMillis: Long = 0L) {
     handler.postDelayed(task, delayInMillis)
 }
 
+fun removeCallbacks(task: Runnable) {
+    handler.removeCallbacks(task)
+}
+
 fun removeCallbacksAndMessages(token: Any? = null) {
     handler.removeCallbacksAndMessages(token)
 }

@@ -31,3 +31,10 @@ fun simpleDateMillsStr(time: Long? = null): String {
     println("simpleDateMillsStr:$utc")
     return utc
 }
+
+@SuppressLint("SimpleDateFormat")
+fun simpleTime(): String {
+    val utc = SimpleDateFormat("yyyy-MM-dd hh:mm:ss.sss").format(Date(System.currentTimeMillis()))
+    println("simpleTime:$utc")
+    return utc
+}
