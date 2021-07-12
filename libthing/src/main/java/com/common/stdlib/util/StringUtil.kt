@@ -69,8 +69,32 @@ object StringUtil {
         return phone?.matches(regex) ?: false
     }
 
+    /*
+    *密码格式：允许大写字母、小写字母、数字、特殊符号，设置的密码必须包含其中两项，限制8-24个字符。
+    *
+    * 判断密码是否包含数字：包含返回1，不包含返回0
+    *  int i = pwd.matches(".*\\d+.*") ? 1 : 0;
+    *
+    *  判断密码是否包含字母：包含返回1，不包含返回0
+    *  int j = pwd.matches(".*[a-zA-Z]+.*") ? 1 : 0;
+    *
+    *  判断密码是否包含特殊符号(~!@#$%^&*()_+|<>,.?/:;'[]{}\)：包含返回1，不包含返回0
+    *  int k = pwd.matches(".*[~!@#$%^&*()_+|<>,.?/:;'\\[\\]{}\"]+.*") ? 1 : 0;
+    *
+    *  判断密码长度是否在8-24位
+    *  int l = pwd.length();
+    *
+    *  if (i + j + k < 2 || l < 8 || l > 24) {
+    *  　　return "error";
+    *  }
+    */
     fun checkPassword(password: String?): Boolean {
-        return Pattern.matches("^[0-9a-zA-Z]{6,18}$", password ?: "")
+        val pwd = password ?: ""
+        val containNum = if (Pattern.matches(".*\\d+.*", pwd)) 1 else 0
+        val containChar = if (Pattern.matches(".*[a-zA-Z]+.*", pwd)) 1 else 0
+        val containSpecialChar = if (Pattern.matches(".*[~!@#\$%^&*()_+|<>,.?/:;'\\\\[\\\\]{}\\\"]+.*", pwd)) 1 else 0
+        val length = pwd.length
+        return !(containNum + containChar + containSpecialChar < 2 || length < 8 || length > 24)
     }
 
     fun desensitizePhone(phone: String?): String {
