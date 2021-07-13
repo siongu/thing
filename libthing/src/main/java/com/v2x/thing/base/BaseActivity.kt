@@ -201,10 +201,10 @@ open class BaseActivity : AppCompatActivity(), CoroutineScope {
             }
         }
         var isFirstAdded = false
-        var f = fm.findFragmentByTag(tag)
-        if (f == null) {
-            f = fragment
-            ft.add(R.id.rl_fragment_content, fragment, tag)
+//        var f = fm.findFragmentByTag(tag)
+        val f = fragment
+        if (!f.isAdded) {
+            ft.add(R.id.rl_fragment_content, f, tag)
             isFirstAdded = true
         }
         ft.show(f)
