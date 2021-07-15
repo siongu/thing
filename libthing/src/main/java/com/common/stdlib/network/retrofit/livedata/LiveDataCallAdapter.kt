@@ -35,7 +35,7 @@ class LiveDataCallAdapter<R>(private val responseType: Type) :
     override fun responseType() = responseType
 
     override fun adapt(call: Call<R>): LiveData<Resource<R>> {
-        return liveData {
+        return liveData(Dispatchers.IO) {
             try {
                 println("execute call in the thread:${Thread.currentThread().name}")
                 val response = call.execute()
@@ -51,7 +51,7 @@ class LiveDataCallAdapter<R>(private val responseType: Type) :
                 }
             } catch (e: IOException) {
                 e.printStackTrace()
-                emit(Resource.error(null as R, msg = e.message ?: "unknown error"))
+                emit(Resource.error(null as R?, msg = e.message ?: "unknown error"))
             }
         }
     }
