@@ -65,7 +65,7 @@ object StringUtil {
      * @return
      */
     fun isCellPhone(phone: String?): Boolean {
-        val regex = Regex("^[1][3,4,5,7,8]+\\d{9}$")
+        val regex = Regex("^[1][3,4,5,6,7,8,9]+\\d{9}$")
         return phone?.matches(regex) ?: false
     }
 
@@ -97,8 +97,11 @@ object StringUtil {
         return !(containNum + containChar + containSpecialChar < 2 || length < 8 || length > 24)
     }
 
-    fun desensitizePhone(phone: String?): String {
-        return phone?.replaceRange(IntRange(4, 7), "****") ?: ""
+    fun desensitizePhone(phone: String?, replaceWidth: String = "*"): String {
+        val start = 4
+        val end = 7
+        val count = end - start + 1
+        return phone?.replaceRange(IntRange(start, end), replaceWidth.repeat(count)) ?: ""
     }
 
     fun desensitizePassword(password: String?, replaceWith: String = "*"): String {
